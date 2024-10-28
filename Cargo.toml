@@ -1,0 +1,17 @@
+[package]
+name = "rust-chat-app"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+actix-web = "4.0"          # Web framework
+jsonwebtoken = "8.1"       # JWT handling
+sqlx = { version = "0.6", features = ["runtime-actix-native-tls", "sqlite"] } # ORM
+dotenvy = "0.15"           # For .env management
+bcrypt = "0.10"            # Password hashing
+serde = { version = "1.0", features = ["derive"] } # Serialization
+serde_json = "1.0"
+tokio = { version = "1", features = ["full"] } # Async runtime for Actix and SQLx
+chrono = { version = "0.4", features = ["serde"] }
+log = "0.4"
+env_logger = "0.10"
