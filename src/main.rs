@@ -1,5 +1,7 @@
 mod routes;
 mod middleware;
+mod models;
+mod config;
 
 use actix_web::{web, App, HttpServer};
 use sqlx::SqlitePool;

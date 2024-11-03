@@ -5,9 +5,10 @@
      ```bash
      sqlite3 chat_app.db
      ```
-   - Run this command to delete all users:
+   - Run these commands to delete all users and Reset the AUTOINCREMENT Counter:
      ```sql
      DELETE FROM users;
+     DELETE FROM sqlite_sequence WHERE name = 'users';
      ```
    - Exit the SQLite CLI:
      ```sql

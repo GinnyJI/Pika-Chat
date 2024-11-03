@@ -1,10 +1,12 @@
-use actix_web::{post, HttpResponse, web, Responder};
+use actix_web::{post, HttpResponse, web, Responder, HttpRequest};
 use bcrypt::{hash, verify, DEFAULT_COST};
 use jsonwebtoken::{encode, Header, EncodingKey};
 use chrono::Utc;
-use serde::{Deserialize, Serialize};
 use sqlx::SqlitePool;
 use log::{info, error};
+use crate::models::claim::Claims; // Import the Claims struct
+use serde::Deserialize; // Ensure this line is present
+use crate::config::state::TOKEN_BLACKLIST;
 
 #[derive(Deserialize)]
 struct RegisterData {
@@ -16,12 +18,6 @@ struct RegisterData {
 struct LoginData {
     username: String,
     password: String,
-}
-
-#[derive(Serialize)]
-struct Claims {
-    sub: String,
-    exp: usize,
 }
 
 #[post("/register")]
@@ -67,12 +63,18 @@ async fn login_user(
         let is_valid = verify(&login_data.password, &user.password_hash).unwrap();
 
         if is_valid {
+            let now = Utc::now().timestamp() as usize;
             let expiration = Utc::now()
                 .checked_add_signed(chrono::Duration::hours(24))
                 .expect("valid timestamp")
                 .timestamp() as usize;
 
-            let claims = Claims { sub: user.username.clone(), exp: expiration };
+            let claims = Claims {
+                sub: user.user_id.expect("User ID should not be None").to_string(),  // Use user_id for sub
+                username: user.username.clone(),  // Added username to claims
+                iat: now,  // Issued at time
+                exp: expiration,  // Expiration time
+            };
 
             let token = encode(
                 &Header::default(),
@@ -92,7 +94,19 @@ async fn login_user(
     HttpResponse::Unauthorized().body("Invalid username or password")
 }
 
-pub async fn logout_user() -> impl Responder {
-    info!("User logged out successfully.");
-    HttpResponse::Ok().json("Logged out successfully")
+pub async fn logout_user(req: HttpRequest) -> impl Responder {
+    if let Some(auth_header) = req.headers().get("Authorization") {
+        if let Ok(header_str) = auth_header.to_str() {
+            if header_str.starts_with("Bearer ") {
+                let token = header_str[7..].to_string();
+                {
+                    let mut blacklist = TOKEN_BLACKLIST.lock().unwrap();
+                    blacklist.insert(token.clone());
+                    info!("Token '{}' added to blacklist. Current blacklist: {:?}", token, *blacklist);
+                }
+                return HttpResponse::Ok().json("Logged out successfully");
+            }
+        }
+    }
+    HttpResponse::BadRequest().body("Invalid or missing token")
 }
