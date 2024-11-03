@@ -1,4 +1,4 @@
-use actix_web::{post, HttpResponse, web};
+use actix_web::{post, HttpResponse, web, Responder};
 use bcrypt::{hash, verify, DEFAULT_COST};
 use jsonwebtoken::{encode, Header, EncodingKey};
 use chrono::Utc;
@@ -77,7 +77,7 @@ async fn login_user(
             let token = encode(
                 &Header::default(),
                 &claims,
-                &EncodingKey::from_secret("your_secret_key".as_ref()),
+                &EncodingKey::from_secret("secret_key_for_jwt".as_ref()),
             ).unwrap();
 
             info!("User '{}' logged in successfully.", user.username);
@@ -92,9 +92,7 @@ async fn login_user(
     HttpResponse::Unauthorized().body("Invalid username or password")
 }
 
-#[post("/logout")]
-async fn logout_user() -> HttpResponse {
-    // Respond with a success message indicating logout
+pub async fn logout_user() -> impl Responder {
     info!("User logged out successfully.");
     HttpResponse::Ok().json("Logged out successfully")
 }

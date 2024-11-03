@@ -1,12 +1,4 @@
-Here’s the updated test procedure, now including the steps to test the logout endpoint.
-
----
-
 ### Steps to Test Registration, Login, and Logout
-
-```bash
-RUST_LOG=info cargo run
-```
 
 1. **Clean Up the Database**:
    - Open the SQLite CLI and connect to your database file:
@@ -51,7 +43,7 @@ RUST_LOG=info cargo run
 
 5. **Test the Logout Endpoint**:
    - Use the token obtained from the login response to send a `POST` request to `http://127.0.0.1:8080/logout`.
-   - With `curl`, you can run:
+   - With `curl`, run:
      ```bash
      curl -X POST http://127.0.0.1:8080/logout \
           -H "Authorization: Bearer <your_token_here>"
@@ -61,3 +53,37 @@ RUST_LOG=info cargo run
 
 6. **Repeat as Needed**:
    - Repeat the cleanup, registration, login, and logout steps for different test cases or usernames.
+
+---
+
+### Steps to Test the Middleware
+
+1. **Test with a Valid Token**:
+   - Use `curl` to send a request with a valid token to a protected route:
+     ```bash
+     curl -H "Authorization: Bearer <your_valid_token>" http://127.0.0.1:8080/test-protected
+     ```
+   - Replace `<your_valid_token>` with a JWT that is accepted by your application.
+   - **Expected Result**: You should receive a `200 OK` response with the message from the protected route.
+
+2. **Test with an Invalid Token**:
+   - Use `curl` to send a request with an invalid token:
+     ```bash
+     curl -H "Authorization: Bearer invalid_token" http://127.0.0.1:8080/test-protected
+     ```
+   - **Expected Result**: You should receive a `401 Unauthorized` response.
+
+3. **Test Without a Token**:
+   - Use `curl` to send a request without an `Authorization` header:
+     ```bash
+     curl http://127.0.0.1:8080/test-protected
+     ```
+   - **Expected Result**: You should receive a `401 Unauthorized` response.
+
+---
+
+Ensure your server is running with:
+```bash
+RUST_LOG=info cargo run
+```
+
