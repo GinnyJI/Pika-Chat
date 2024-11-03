@@ -27,6 +27,8 @@ async fn register_user(
 ) -> HttpResponse {
     let hashed_password = hash(&user_data.password, DEFAULT_COST).unwrap();
 
+    // - pool.get_ref() fetches a reference to the database connection pool, which ensures an active
+    //   connection is used for executing the query.
     let result = sqlx::query!(
         "INSERT INTO users (username, password_hash) VALUES (?, ?)",
         user_data.username,
@@ -52,6 +54,9 @@ async fn login_user(
     pool: web::Data<SqlitePool>,
     login_data: web::Json<LoginData>,
 ) -> HttpResponse {
+    // - .fetch_optional() returns an Option type, yielding Some(record) if a match is found, or None if no match exists.
+    // - pool.get_ref() accesses a reference to the connection pool, providing an active connection for query execution.
+    // - The .await keyword waits for the completion of the async operation, returning the query result.
     let user = sqlx::query!(
         "SELECT user_id, username, password_hash, created_at FROM users WHERE username = ?",
         login_data.username
