@@ -177,4 +177,5 @@ Note: All endpoints requiring authentication will be protected using JWT validat
     - *Teammate 2*: Configure deployment environment variables and database connectivity, and conduct integration tests to ensure smooth frontend-backend interaction.
     - **Collaboration**: Perform joint load testing to ensure app stability under concurrent use. Draft the README and setup instructions, create architectural diagrams, and record a project demo video.
   - **Outcome**: A fully deployed, optimized chat application with complete project documentation and a demonstration video.
-"""
+
+  
