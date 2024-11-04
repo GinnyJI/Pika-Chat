@@ -1,7 +1,7 @@
 use actix_service::{Service, Transform};
 use actix_web::{
     dev::{ServiceRequest, ServiceResponse},
-    Error, HttpResponse, body::BoxBody, web::Data,
+    Error, HttpResponse, body::BoxBody, web::Data, HttpMessage
 }; // Import essential components for HTTP handling and request/response types
 // Import future types for async operations in middleware
 use futures_util::future::{ok, LocalBoxFuture, Ready};
@@ -126,6 +126,11 @@ where
                                                 "Token validated successfully for user ID: {}, username: {}",
                                                 decoded_token.claims.sub, decoded_token.claims.username
                                             );
+
+                                            // Insert user_id into req.extensions()
+                                            req.extensions_mut().insert(user_id);
+
+                                            // Proceed with the service call
                                             return service.call(req).await;
                                         }
                                     }
