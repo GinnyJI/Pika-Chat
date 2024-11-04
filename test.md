@@ -1,60 +1,67 @@
 ## Steps to Run the Project
 
-1. **Build the Project**:
-   
-   Compile the project and download all dependencies:
-   ```bash
-   cargo build
-   ```
-   
-2. **Run Database Migrations**:
-   
-   Ensure you are in the project root directory and execute the SQL migrations:
-   ```bash
-   sqlx migrate run
-   ```
+1. **Prepare the Environment**:
+   - Ensure that you have `Rust`, `Cargo`, and `SQLx CLI` installed. If not, install them using:
 
-   This step will create or update the database schema according to the migration scripts in the `migrations/` directory.
-   
-3. **Start the Server**:
-   
-   Run the server with logging enabled:
-   ```bash
-   RUST_LOG=info cargo run
-   ```
-   
-   The server should start and listen on `http://127.0.0.1:8080` by default. Ensure that all logs are printed to verify the server's status and any potential issues.
+     ```bash
+     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+     cargo install sqlx-cli --no-default-features --features sqlite
+     ```
 
-### Additional Notes
-- **Environment Setup**:
-  
-  Ensure you have a `.env` file with the `DATABASE_URL` set to your SQLite database, such as:
-  ```env
-  DATABASE_URL=sqlite:chat_app.db
-  ```
-  
-- **Initial Setup**:
-  
-  If running for the first time, confirm that you have `sqlx-cli` installed:
-  ```bash
-  cargo install sqlx-cli --no-default-features --features sqlite
-  ```
-  
-- **Verifying the Server**:
-  
-  You can use `curl` or a browser to check the server status:
-  ```bash
-  curl http://127.0.0.1:8080
-  ```
+2. **Set Up Environment Variables**:
 
-These steps will get your project up and running smoothly for testing and development.
+   - Create a `.env` file in the project root directory with the following content:
+     ```env
+     DATABASE_URL=sqlite:./chat_app.db
+     ```
 
+3. **Setup Database**:
+
+   - Create the SQLite database file and set the correct permissions:
+
+     ```bash
+     touch chat_app.db
+     chmod 664 chat_app.db
+     ```
+
+   - Run the SQL migrations to set up or update the database schema:
+
+     ```bash
+     sqlx migrate run
+     ```
+
+   - This will execute the migration scripts in the `migrations/` directory.
+
+4. **Build the Project**:
+
+   - Compile the project and download all necessary dependencies:
+     ```bash
+     cargo build
+     ```
+
+5. **Start the Server**:
+
+   - Run the server with logging enabled to see detailed logs:
+
+     ```bash
+     RUST_LOG=info cargo run
+     ```
+
+### Additional Notes:
+
+- **Reset Database for Development**:
+  - To reset the database, delete the `chat_app.db` file and re-run migrations:
+
+    ```bash
+    rm chat_app.db
+    sqlx migrate run
+    ```
 
 ## Steps to Test APIs
 
 1. **Clean Up the Database**:
    - Open the SQLite CLI and connect to your database file:
-    
+
      ```bash
      sqlite3 chat_app.db
      ```
