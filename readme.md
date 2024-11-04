@@ -25,13 +25,11 @@ src/
 ├── main.rs                         # Main application entry point with Actix Web server setup
 ```
 
-
-
 ## APIs
 
 ### Authentication
 
-1. **POST `/register`**
+1. **POST `/api/register`**
    - **Summary**: Register a new user account.
    - **Description**: Creates a new user in the system with a unique username and a hashed password.
    - **Request Body**:
@@ -46,7 +44,7 @@ src/
      - `400 Bad Request`: Invalid input data, such as missing or non-compliant fields.
    - **Security**: None (public access).
 
-2. **POST `/login`**
+2. **POST `/api/login`**
    - **Summary**: Authenticate a user and issue a JWT token.
    - **Description**: Verifies the provided credentials and returns a JWT token for session management.
    - **Request Body**:
@@ -66,7 +64,7 @@ src/
      - `401 Unauthorized`: Incorrect username or password.
    - **Security**: None (public access).
 
-3. **POST `/logout`**
+3. **POST `/api/logout`**
    - **Summary**: Log out a user and invalidate their session.
    - **Description**: Ends the current session by invalidating the JWT token.
    - **Request Headers**:
@@ -78,7 +76,7 @@ src/
 
 ### Test
 
-1. **GET `/test-protected`**
+1. **GET `/api/test-protected`**
    - **Summary**: Test route for verifying middleware and authentication.
    - **Description**: Checks whether the user is properly authenticated using `AuthMiddleware`.
    - **Request Headers**:
@@ -90,7 +88,7 @@ src/
 
 ### Chat Room Management
 
-1. **POST `/rooms`**
+1. **POST `/api/rooms`**
    - **Summary**: Create a new chat room.
    - **Description**: Allows an authenticated user to create a new chat room.
    - **Request Body**:
@@ -109,7 +107,7 @@ src/
      - `400 Bad Request`: Invalid input data or duplicate room name.
    - **Security**: JWT token required.
 
-2. **POST `/rooms/{room_id}/join`**
+2. **POST `/api/rooms/{room_id}/join`**
    - **Summary**: Join a specific chat room.
    - **Description**: Enables an authenticated user to join an existing chat room by providing its ID.
    - **Path Parameters**:
@@ -119,7 +117,7 @@ src/
      - `404 Not Found`: Room with the specified ID does not exist.
    - **Security**: JWT token required.
 
-3. **GET `/rooms`**
+3. **GET `/api/rooms`**
    - **Summary**: Retrieve a list of available chat rooms.
    - **Description**: Returns all existing chat rooms available for the authenticated user to browse or join.
    - **Responses**:
@@ -133,4 +131,3 @@ src/
        ]
        ```
    - **Security**: JWT token required.
-

@@ -40,6 +40,7 @@ async fn register_user(
     match result {
         Ok(_) => {
             info!("User '{}' registered successfully.", user_data.username);
+            // This sends a 201 Created status code with a success message in the response body.
             HttpResponse::Created().body("User created successfully")
         }
         Err(e) => {
