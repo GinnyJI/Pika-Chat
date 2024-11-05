@@ -163,3 +163,82 @@
    - **Expected Result**: You should receive a `401 Unauthorized` response.
 
 ---
+
+### Steps to Test Chat Room Management APIs
+
+1. **Test the Create Room Endpoint (`POST /api/rooms`)**:
+
+   - **Description**: Send a request to create a new chat room as an authenticated user.
+   - **Precondition**: Ensure you have a valid JWT token from the login endpoint.
+
+   ```bash
+   curl -X POST http://127.0.0.1:8080/api/rooms \
+        -H "Authorization: Bearer <your_token_here>" \
+        -H "Content-Type: application/json" \
+        -d '{"room_name": "testroom"}'
+   ```
+
+   - **Expected Result**:
+     - On success, you should receive a `201 Created` response with a JSON body containing the `room_id` of the newly created room:
+       ```json
+       { "room_id": "int" }
+       ```
+     - If the room name already exists, you should receive a `400 Bad Request` response indicating a duplicate room name.
+
+2. **Verify Room Creation in the Database**:
+
+   - **Description**: Check that the room was correctly created by querying the database.
+   - **Command**:
+
+     ```sql
+     SELECT * FROM rooms WHERE room_name = 'testroom';
+     ```
+
+   - **Expected Result**: You should see an entry in the `rooms` table with the name `testroom` and an associated `room_id`.
+
+3. **Test the Retrieve Rooms Endpoint (`GET /api/rooms`)**:
+
+   - **Description**: Retrieve a list of all available chat rooms.
+   - **Precondition**: Use a valid JWT token.
+
+   ```bash
+   curl -X GET http://127.0.0.1:8080/api/rooms \
+        -H "Authorization: Bearer <your_token_here>"
+   ```
+
+   - **Expected Result**:
+     - You should receive a `200 OK` response with a JSON array of available rooms:
+       ```json
+       [
+         { "room_id": 1, "room_name": "testroom" },
+         { "room_id": 2, "room_name": "anotherroom" }
+       ]
+       ```
+
+4. **Test the Join Room Endpoint (`POST /api/rooms/{room_id}/join`)**:
+
+   - **Description**: Join a specific chat room by providing the room ID.
+   - **Precondition**: Use a valid JWT token and ensure that the `room_id` you provide exists.
+
+   ```bash
+   curl -X POST http://127.0.0.1:8080/api/rooms/1/join \
+        -H "Authorization: Bearer <your_token_here>"
+   ```
+
+   - **Expected Result**:
+     - On success, you should receive a `200 OK` response confirming that the user has joined the room.
+     - If the specified `room_id` does not exist, you should receive a `404 Not Found` response.
+
+5. **Verify User-Room Relationship in the Database**:
+
+   - **Description**: Check that the user is associated with the chat room in the `user_rooms` table.
+   - **Command**:
+
+     ```sql
+     SELECT * FROM user_rooms WHERE user_id = <your_user_id> AND room_id = 1;
+     ```
+
+   - **Expected Result**: You should see an entry in the `user_rooms` table indicating the relationship between the user and the room.
+
+---
+
