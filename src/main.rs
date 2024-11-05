@@ -51,17 +51,13 @@ async fn main() -> std::io::Result<()> {
                     .service(
                         web::resource("/rooms")
                             .wrap(AuthMiddleware)
-                            .route(web::post().to(create_room))
+                            .route(web::post().to(create_room))  // Handle POST requests to create a room
+                            .route(web::get().to(get_rooms))     // Handle GET requests to retrieve rooms
                     )
                     .service(
                         web::resource("/rooms/{room_id}/join")
                             .wrap(AuthMiddleware)
                             .route(web::post().to(join_room))
-                    )
-                    .service(
-                        web::resource("/rooms")
-                            .wrap(AuthMiddleware)
-                            .route(web::get().to(get_rooms))
                     )
             )
     })

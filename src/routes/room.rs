@@ -10,9 +10,9 @@ pub struct RoomInfo {
 
 #[derive(Serialize)]
 pub struct Room {
-    pub room_id: Option<i64>, // Room ID as Option<i64>
+    pub room_id: i64,
     pub room_name: String,
-    pub user_id: i32, // Owner's user ID
+    pub user_id: i64,
 }
 
 pub async fn create_room(
@@ -20,8 +20,10 @@ pub async fn create_room(
     room_info: web::Json<RoomInfo>,
     req: HttpRequest, // Used to extract user ID from JWT
 ) -> impl Responder {
+    info!("Before Starting create_room function");
     // Extract user ID from request extensions (set by middleware)
-    if let Some(user_id) = req.extensions().get::<i32>() {
+    if let Some(user_id) = req.extensions().get::<i64>() {
+        info!("Starting create_room function");
         match sqlx::query!(
             "INSERT INTO rooms (room_name, user_id) VALUES (?, ?)",
             room_info.room_name, user_id
@@ -45,16 +47,14 @@ pub async fn create_room(
 
 pub async fn join_room(
     pool: web::Data<SqlitePool>,
-    path: web::Path<i32>,
+    path: web::Path<i64>, // Changed to i64
     req: HttpRequest, // Used to extract user ID from JWT
 ) -> impl Responder {
-    // Extract the inner i32 value from the web::Path wrapper, which contains the room_id path parameter.
-    // In a route like /rooms/{room_id}, the {room_id} part is captured as a path parameter and passed to the handler as web::Path.
     let room_id = path.into_inner();
 
     // Extract user ID from request extensions (set by middleware)
-    if let Some(user_id) = req.extensions().get::<i32>() {
-
+    if let Some(user_id) = req.extensions().get::<i64>() {
+        info!("Starting join_room function");
         // Check if the user exists in the `users` table
         let user_exists = sqlx::query!(
             "SELECT 1 AS exists_flag FROM users WHERE user_id = ?",
@@ -108,13 +108,16 @@ pub async fn join_room(
 pub async fn get_rooms(pool: web::Data<SqlitePool>) -> impl Responder {
     match sqlx::query_as!(
         Room,
-        "SELECT room_id as `room_id: Option<i64>`, room_name, user_id as `user_id: i32` FROM rooms"
+        "SELECT room_id as `room_id: i64`, room_name, user_id as `user_id: i64` FROM rooms"
     )
     .fetch_all(pool.get_ref())
     .await
     {
         Ok(rooms) => {
-            info!("Retrieved {} rooms", rooms.len());
+            info!("Retrieved {} rooms from the database", rooms.len());
+            for room in &rooms {
+                info!("Room ID: {}, Room Name: {}, User ID: {}", room.room_id, room.room_name, room.user_id);
+            }
             HttpResponse::Ok().json(rooms)
         }
         Err(e) => {
@@ -123,3 +126,4 @@ pub async fn get_rooms(pool: web::Data<SqlitePool>) -> impl Responder {
         }
     }
 }
+
