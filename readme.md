@@ -30,41 +30,58 @@ src/
 ### Authentication
 
 1. **POST `/api/register`**
+
    - **Summary**: Register a new user account.
+
    - **Description**: Creates a new user in the system with a unique username and a hashed password.
+
    - **Request Body**:
+
      ```json
      {
        "username": "string",
        "password": "string"
      }
      ```
+
    - **Responses**:
+
      - `201 Created`: User successfully registered.
      - `400 Bad Request`: Invalid input data, such as missing or non-compliant fields.
+
    - **Security**: None (public access).
 
 2. **POST `/api/login`**
+
    - **Summary**: Authenticate a user and issue a JWT token.
+
    - **Description**: Verifies the provided credentials and returns a JWT token for session management.
+
    - **Request Body**:
+
      ```json
      {
        "username": "string",
        "password": "string"
      }
      ```
+
    - **Responses**:
+
      - `200 OK`: Returns a JSON object containing the JWT token.
+
        ```json
        {
          "token": "string"
        }
        ```
+
      - `401 Unauthorized`: Incorrect username or password.
+
    - **Security**: None (public access).
 
 3. **POST `/api/logout`**
+
    - **Summary**: Log out a user and invalidate their session.
    - **Description**: Ends the current session by invalidating the JWT token.
    - **Request Headers**:
@@ -86,48 +103,33 @@ src/
      - `401 Unauthorized`: Authentication failed due to a missing or invalid token.
    - **Security**: JWT token required.
 
-### Chat Room Management
+## Accessing Swagger API Documentation
 
-1. **POST `/api/rooms`**
-   - **Summary**: Create a new chat room.
-   - **Description**: Allows an authenticated user to create a new chat room.
-   - **Request Body**:
-     ```json
-     {
-       "room_name": "string"
-     }
+The project uses Swagger UI for interactive API documentation. Follow the steps below to access it:
+
+1. **Start the Server**:
+   - Run the following command to start the server:
+
+     ```bash
+     cargo run
      ```
-   - **Responses**:
-     - `201 Created`: Room successfully created.
-       ```json
-       {
-         "room_id": "int"
-       }
-       ```
-     - `400 Bad Request`: Invalid input data or duplicate room name.
-   - **Security**: JWT token required.
 
-2. **POST `/api/rooms/{room_id}/join`**
-   - **Summary**: Join a specific chat room.
-   - **Description**: Enables an authenticated user to join an existing chat room by providing its ID.
-   - **Path Parameters**:
-     - `room_id` (integer): The unique identifier of the chat room to join.
-   - **Responses**:
-     - `200 OK`: Successfully joined the room.
-     - `404 Not Found`: Room with the specified ID does not exist.
-   - **Security**: JWT token required.
+2. **Open Swagger UI**:
+   - Once the server is running, open a browser and navigate to:
 
-3. **GET `/api/rooms`**
-   - **Summary**: Retrieve a list of available chat rooms.
-   - **Description**: Returns all existing chat rooms available for the authenticated user to browse or join.
-   - **Responses**:
-     - `200 OK`: A JSON array of chat rooms.
-       ```json
-       [
-         {
-           "room_id": "int",
-           "room_name": "string"
-         }
-       ]
-       ```
-   - **Security**: JWT token required.
+     ```bash
+     http://127.0.0.1:8080/swagger-ui/
+     ```
+
+   - The Swagger UI provides a user-friendly interface to explore and interact with all documented endpoints, including Authentication, Test, and Chat Room Management APIs.
+
+3. **Using the Swagger Interface**:
+   - Expand each endpoint to view details about parameters, request body structure, responses, and authentication requirements.
+   - You can test each API directly in Swagger by entering parameters, headers (e.g., JWT tokens), and request bodies, and clicking **Execute**.
+
+4. **Download OpenAPI JSON Specification**:
+   - You can also view or download the raw OpenAPI JSON specification from:
+
+    ```bash
+    http://127.0.0.1:8080/api-doc/openapi.json
+    ```

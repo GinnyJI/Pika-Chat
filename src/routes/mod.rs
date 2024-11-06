@@ -5,4 +5,4 @@ pub mod room;
 // Re-export functions for easier access
 pub use auth::{register_user, login_user, logout_user};
 pub use test_routes::test_protected_route;
-pub use room::{create_room, join_room, get_rooms};
+pub use room::{create_room, join_room, get_rooms, Room, RoomInfo};

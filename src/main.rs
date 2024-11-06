@@ -6,7 +6,20 @@ mod config;
 use actix_web::{web, App, HttpServer};
 use sqlx::SqlitePool;
 use middleware::auth_middleware::AuthMiddleware;
-use routes::{register_user, login_user, logout_user, test_protected_route, create_room, join_room, get_rooms};
+use routes::{register_user, login_user, logout_user, test_protected_route, create_room, join_room, get_rooms, Room, RoomInfo};
+use utoipa::OpenApi;
+use utoipa_swagger_ui::SwaggerUi;
+
+#[derive(OpenApi)]
+#[openapi(
+    paths(
+        crate::routes::room::get_rooms, 
+        crate::routes::room::create_room, 
+        crate::routes::room::join_room
+    ), 
+    components(schemas(Room, RoomInfo))
+)]
+struct ApiDoc;
 
 // Macro to mark the main function as an Actix Web entry point
 #[actix_web::main]
@@ -25,7 +38,10 @@ async fn main() -> std::io::Result<()> {
         App::new()
             // Register the database pool as application data, making it accessible to route handlers
             .app_data(web::Data::new(pool.clone()))
-
+            .service(
+                SwaggerUi::new("/swagger-ui/{_:.*}")
+                    .url("/api-doc/openapi.json", ApiDoc::openapi()),
+            )
             // Scope all routes under `/api`
             .service(
                 web::scope("/api")

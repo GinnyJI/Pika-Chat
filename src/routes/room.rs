@@ -2,28 +2,40 @@ use actix_web::{HttpResponse, Responder, web, HttpRequest, HttpMessage};
 use sqlx::SqlitePool;
 use serde::{Deserialize, Serialize};
 use log::info;
+use utoipa::ToSchema;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, ToSchema)]
 pub struct RoomInfo {
     pub room_name: String,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, ToSchema)]
 pub struct Room {
     pub room_id: i64,
     pub room_name: String,
     pub user_id: i64,
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/rooms",
+    request_body = RoomInfo, // Define RoomInfo as the request body schema
+    responses(
+        (status = 201, description = "Room created successfully", body = Room),
+        (status = 400, description = "Error creating room"),
+        (status = 401, description = "User ID not found")
+    ),
+    params(
+        ("Authorization" = String, Header, description = "Bearer <JWT Token>")
+    )
+)]
 pub async fn create_room(
     pool: web::Data<SqlitePool>,
     room_info: web::Json<RoomInfo>,
     req: HttpRequest, // Used to extract user ID from JWT
 ) -> impl Responder {
     info!("Before Starting create_room function");
-    // Extract user ID from request extensions (set by middleware)
     if let Some(user_id) = req.extensions().get::<i64>() {
-        info!("Starting create_room function");
         match sqlx::query!(
             "INSERT INTO rooms (room_name, user_id) VALUES (?, ?)",
             room_info.room_name, user_id
@@ -33,7 +45,11 @@ pub async fn create_room(
         {
             Ok(result) => {
                 info!("Room '{}' created successfully by user '{}'", room_info.room_name, user_id);
-                HttpResponse::Created().json(serde_json::json!({ "room_id": result.last_insert_rowid() }))
+                HttpResponse::Created().json(Room {
+                    room_id: result.last_insert_rowid(),
+                    room_name: room_info.room_name.clone(),
+                    user_id: *user_id,
+                })
             }
             Err(e) => {
                 info!("Failed to create room: {}", e);
@@ -45,6 +61,20 @@ pub async fn create_room(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/rooms/{room_id}/join",
+    params(
+        ("room_id" = i64, Path, description = "Room ID to join"),
+        ("Authorization" = String, Header, description = "Bearer <JWT Token>")
+    ),
+    responses(
+        (status = 200, description = "Joined room successfully"),
+        (status = 400, description = "Bad request: Room does not exist"),
+        (status = 400, description = "Bad request: Error joining room"),
+        (status = 401, description = "User ID not found")
+    )
+)]
 pub async fn join_room(
     pool: web::Data<SqlitePool>,
     path: web::Path<i64>, // Changed to i64
@@ -52,23 +82,7 @@ pub async fn join_room(
 ) -> impl Responder {
     let room_id = path.into_inner();
 
-    // Extract user ID from request extensions (set by middleware)
     if let Some(user_id) = req.extensions().get::<i64>() {
-        info!("Starting join_room function");
-        // Check if the user exists in the `users` table
-        let user_exists = sqlx::query!(
-            "SELECT 1 AS exists_flag FROM users WHERE user_id = ?",
-            user_id
-        )
-        .fetch_optional(pool.get_ref())
-        .await
-        .map(|row| row.is_some())
-        .unwrap_or(false);
-
-        if !user_exists {
-            return HttpResponse::BadRequest().body("User does not exist");
-        }
-
         // Check if the room exists in the `rooms` table
         let room_exists = sqlx::query!(
             "SELECT 1 AS exists_flag FROM rooms WHERE room_id = ?",
@@ -105,6 +119,17 @@ pub async fn join_room(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/rooms",
+    responses(
+        (status = 200, description = "List of rooms", body = [Room]),
+        (status = 500, description = "Failed to retrieve rooms")
+    ),
+    params(
+        ("Authorization" = String, Header, description = "Bearer <JWT Token>")
+    )
+)]
 pub async fn get_rooms(pool: web::Data<SqlitePool>) -> impl Responder {
     match sqlx::query_as!(
         Room,
@@ -126,4 +151,3 @@ pub async fn get_rooms(pool: web::Data<SqlitePool>) -> impl Responder {
         }
     }
 }
-

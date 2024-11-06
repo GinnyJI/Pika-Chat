@@ -6,11 +6,11 @@
      ```bash
      curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
      cargo install sqlx-cli --no-default-features --features sqlite
-     ```
 
 2. **Set Up Environment Variables**:
 
    - Create a `.env` file in the project root directory with the following content:
+
      ```env
      DATABASE_URL=sqlite:./chat_app.db
      ```
@@ -35,6 +35,7 @@
 4. **Build the Project**:
 
    - Compile the project and download all necessary dependencies:
+
      ```bash
      cargo build
      ```
@@ -43,9 +44,9 @@
 
    - Run the server with logging enabled to see detailed logs:
 
-     ```bash
-     RUST_LOG=info cargo run
-     ```
+    ```bash
+    RUST_LOG=info cargo run
+    ```
 
 ### Additional Notes:
 
@@ -173,16 +174,23 @@
 
    ```bash
    curl -X POST http://127.0.0.1:8080/api/rooms \
-        -H "Authorization: Bearer <your_token_here>" \
+        -H "Authorization: Bearer <your_valid_token> \
         -H "Content-Type: application/json" \
         -d '{"room_name": "testroom"}'
    ```
 
    - **Expected Result**:
-     - On success, you should receive a `201 Created` response with a JSON body containing the `room_id` of the newly created room:
+
+     - On success, you should receive a `201 Created` response with a JSON body containing the full room data:
+
        ```json
-       { "room_id": "int" }
+       {
+         "room_id": 1,
+         "room_name": "testroom",
+         "user_id": <your_user_id>
+       }
        ```
+
      - If the room name already exists, you should receive a `400 Bad Request` response indicating a duplicate room name.
 
 2. **Verify Room Creation in the Database**:
@@ -207,11 +215,16 @@
    ```
 
    - **Expected Result**:
+
      - You should receive a `200 OK` response with a JSON array of available rooms:
+
        ```json
        [
-         { "room_id": 1, "room_name": "testroom" },
-         { "room_id": 2, "room_name": "anotherroom" }
+         {
+           "room_id": 1,
+           "room_name": "testroom",
+           "user_id": <owner_user_id>
+         }
        ]
        ```
 
@@ -242,3 +255,7 @@
 
 ---
 
+### Access Swagger UI Documentation
+
+- **URL**: After starting the server, access the Swagger UI at `http://127.0.0.1:8080/swagger-ui/`.
+- **Description**: The Swagger UI provides an interactive interface to explore the API endpoints. You can send requests directly from the UI using example data.
