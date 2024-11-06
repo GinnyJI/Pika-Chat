@@ -2,112 +2,96 @@
 
 ```graphql
 migrations/          
-├── 0001_create_users.sql           # SQL migration for creating the users table
+├── 0001_create_users.sql              # SQL migration for creating the users table
 └── 0002_create_rooms_and_user_rooms.sql # SQL migration for creating chat rooms and user-room relationship tables
 src/
-├── config/                         # Configuration-related files, including state management and app settings
-│   ├── mod.rs                      # Module entry point for the config folder
-│   └── state.rs                    # Manages the application state and configurations
-├── middleware/                     # Middleware implementations for handling request processing
-│   ├── auth_middleware.rs          # Middleware for JWT-based authentication
-│   └── mod.rs                      # Module entry point for middleware
-├── models/                         # Data models representing database structures and entities
-│   ├── mod.rs                      # Module entry point for models
-│   ├── claim.rs                    # Struct for JWT claims
-│   ├── user.rs                     # Model definition for user-related data
-│   ├── room.rs                     # Model for chat room data
-│   └── user_room.rs                # Model for user-room relationships
-├── routes/                         # Handlers for different application routes
-│   ├── auth.rs                     # Route handlers for authentication (e.g., register, login)
-│   ├── room.rs                     # Route handlers for chat room creation and management
-│   ├── test_routes.rs              # Route for testing middleware functionality
-│   └── mod.rs                      # Module entry point for exporting all routes
-├── main.rs                         # Main application entry point with Actix Web server setup
+├── config/                            # Configuration-related files, including state management and app settings
+│   ├── mod.rs                         # Module entry point for the config folder
+│   └── state.rs                       # Manages the application state and configurations
+├── middleware/                        # Middleware implementations for handling request processing
+│   ├── auth_middleware.rs             # Middleware for JWT-based authentication
+│   └── mod.rs                         # Module entry point for middleware
+├── models/                            # Data models representing database structures and entities
+│   ├── mod.rs                         # Module entry point for models
+│   ├── claim.rs                       # Struct for JWT claims
+│   ├── response.rs                    # Structs for standardized response
+│   ├── user.rs                        # Model definition for user-related data
+│   ├── room.rs                        # Model for chat room data
+│   └── user_room.rs                   # Model for user-room relationships
+├── routes/                            # Handlers for different application routes
+│   ├── auth.rs                        # Route handlers for authentication (e.g., register, login)
+│   ├── room.rs                        # Route handlers for chat room creation and management
+│   ├── test_routes.rs                 # Route for testing middleware functionality
+│   └── mod.rs                         # Module entry point for exporting all routes
+├── main.rs                            # Main application entry point with Actix Web server setup
 ```
 
-## APIs
+## Steps to Run the Project
 
-### Authentication
+1. **Prepare the Environment**:
+   - Ensure that you have `Rust`, `Cargo`, and `SQLx CLI` installed. If not, install them using:
 
-1. **POST `/api/register`**
+     ```bash
+     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+     cargo install sqlx-cli --no-default-features --features sqlite
 
-   - **Summary**: Register a new user account.
+2. **Set Up Environment Variables**:
 
-   - **Description**: Creates a new user in the system with a unique username and a hashed password.
+   - Create a `.env` file in the project root directory with the following content:
 
-   - **Request Body**:
-
-     ```json
-     {
-       "username": "string",
-       "password": "string"
-     }
+     ```env
+     DATABASE_URL=sqlite:./chat_app.db
      ```
 
-   - **Responses**:
+3. **Setup Database**:
 
-     - `201 Created`: User successfully registered.
-     - `400 Bad Request`: Invalid input data, such as missing or non-compliant fields.
+   - Create the SQLite database file and set the correct permissions:
 
-   - **Security**: None (public access).
-
-2. **POST `/api/login`**
-
-   - **Summary**: Authenticate a user and issue a JWT token.
-
-   - **Description**: Verifies the provided credentials and returns a JWT token for session management.
-
-   - **Request Body**:
-
-     ```json
-     {
-       "username": "string",
-       "password": "string"
-     }
+     ```bash
+     touch chat_app.db
+     chmod 664 chat_app.db
      ```
 
-   - **Responses**:
+   - Run the SQL migrations to set up or update the database schema:
 
-     - `200 OK`: Returns a JSON object containing the JWT token.
+     ```bash
+     sqlx migrate run
+     ```
 
-       ```json
-       {
-         "token": "string"
-       }
-       ```
+   - This will execute the migration scripts in the `migrations/` directory.
 
-     - `401 Unauthorized`: Incorrect username or password.
+4. **Build the Project**:
 
-   - **Security**: None (public access).
+   - Compile the project and download all necessary dependencies:
 
-3. **POST `/api/logout`**
+     ```bash
+     cargo build
+     ```
 
-   - **Summary**: Log out a user and invalidate their session.
-   - **Description**: Ends the current session by invalidating the JWT token.
-   - **Request Headers**:
-     - `Authorization: Bearer <JWT Token>`
-   - **Responses**:
-     - `200 OK`: User successfully logged out.
-     - `401 Unauthorized`: Token is missing or invalid.
-   - **Security**: JWT token required.
+5. **Start the Server**:
 
-### Test
+   - Run the server with logging enabled to see detailed logs:
 
-1. **GET `/api/test-protected`**
-   - **Summary**: Test route for verifying middleware and authentication.
-   - **Description**: Checks whether the user is properly authenticated using `AuthMiddleware`.
-   - **Request Headers**:
-     - `Authorization: Bearer <JWT Token>`
-   - **Responses**:
-     - `200 OK`: User is authenticated.
-     - `401 Unauthorized`: Authentication failed due to a missing or invalid token.
-   - **Security**: JWT token required.
+     ```bash
+     RUST_LOG=info cargo run
+     ```
+
+### Additional Notes
+
+- **Reset Database for Development**:
+  - To reset the database, delete the `chat_app.db` file and re-run migrations:
+
+    ```bash
+    rm chat_app.db
+    sqlx migrate run
+    ```
 
 ## Accessing Swagger API Documentation
 
 The project uses Swagger UI for interactive API documentation. Follow the steps below to access it:
 
 1. **Start the Server**:
+
    - Run the following command to start the server:
 
      ```bash
@@ -115,6 +99,7 @@ The project uses Swagger UI for interactive API documentation. Follow the steps 
      ```
 
 2. **Open Swagger UI**:
+
    - Once the server is running, open a browser and navigate to:
 
      ```bash
@@ -124,12 +109,254 @@ The project uses Swagger UI for interactive API documentation. Follow the steps 
    - The Swagger UI provides a user-friendly interface to explore and interact with all documented endpoints, including Authentication, Test, and Chat Room Management APIs.
 
 3. **Using the Swagger Interface**:
+
    - Expand each endpoint to view details about parameters, request body structure, responses, and authentication requirements.
    - You can test each API directly in Swagger by entering parameters, headers (e.g., JWT tokens), and request bodies, and clicking **Execute**.
 
 4. **Download OpenAPI JSON Specification**:
+
    - You can also view or download the raw OpenAPI JSON specification from:
 
-    ```bash
-    http://127.0.0.1:8080/api-doc/openapi.json
-    ```
+     ```bash
+     http://127.0.0.1:8080/api-doc/openapi.json
+     ```
+
+## Steps to Test APIs
+
+1. **Clean Up the Database**:
+   - Open the SQLite CLI and connect to your database file:
+
+     ```bash
+     sqlite3 chat_app.db
+     ```
+
+   - Run these commands to delete tables and reset the `AUTOINCREMENT` counter:
+
+     ```sql
+     DELETE FROM users;
+     DELETE FROM sqlite_sequence WHERE name = 'users';
+     DELETE FROM rooms;
+     DELETE FROM sqlite_sequence WHERE name = 'rooms';
+     DELETE FROM user_rooms;
+     DELETE FROM sqlite_sequence WHERE name = 'user_rooms';
+     ```
+
+   - Exit the SQLite CLI:
+
+     ```bash
+     .exit
+     ```
+
+2. **Test the Register Endpoint**:
+
+   - Send a `POST` request to `http://127.0.0.1:8080/api/register` with a JSON payload containing a username and password.
+   - Use `curl`:
+
+     ```bash
+     curl -X POST http://127.0.0.1:8080/api/register \
+          -H "Content-Type: application/json" \
+          -d '{"username": "testuser1", "password": "password123"}'
+     ```
+
+   - Verify that you receive a `201 Created` response, indicating the user was created successfully.
+
+3. **Verify User Creation in Database**:
+
+   - Reopen the SQLite CLI and check that the user was created:
+
+     ```sql
+     SELECT * FROM users WHERE username = 'testuser1';
+     ```
+
+   - Ensure that `testuser` appears in the results.
+
+4. **Test the Login Endpoint**:
+
+   - Send a `POST` request to `http://127.0.0.1:8080/api/login` with the same username and password.
+   - Use `curl`:
+
+     ```bash
+     curl -X POST http://127.0.0.1:8080/api/login \
+          -H "Content-Type: application/json" \
+          -d '{"username": "testuser3", "password": "password123"}'
+     ```
+
+   - Confirm that you receive a `200 OK` response with a token in the response body. Save this token for the logout test.
+
+5. **Test the Logout Endpoint**:
+
+   - Use the token obtained from the login response to send a `POST` request to `http://127.0.0.1:8080/api/logout`.
+   - With `curl`, run:
+
+     ```bash
+     curl -X POST http://127.0.0.1:8080/api/logout \
+          -H "Authorization: Bearer <your_token_here>"
+     ```
+
+   - Replace `<your_token_here>` with the actual token received from the login response.
+   - Check that you receive a `200 OK` response with a message indicating a successful logout.
+
+---
+
+### Steps to Test the Middleware
+
+1. **Test with a Valid Token**:
+   - Use `curl` to send a request with a valid token to a protected route:
+
+     ```bash
+     curl -H "Authorization: Bearer <your_valid_token>" http://127.0.0.1:8080/api/test-protected
+     ```
+
+   - Replace `<your_valid_token>` with a JWT that is accepted by your application.
+   - **Expected Result**: You should receive a `200 OK` response with the message from the protected route.
+
+2. **Test with an Invalid Token**:
+
+   - Use `curl` to send a request with an invalid token:
+
+     ```bash
+     curl -H "Authorization: Bearer invalid_token" http://127.0.0.1:8080/api/test-protected
+     ```
+
+   - **Expected Result**: You should receive a `401 Unauthorized` response.
+
+3. **Test Without a Token**:
+
+   - Use `curl` to send a request without an `Authorization` header:
+
+     ```bash
+     curl http://127.0.0.1:8080/api/test-protected
+     ```
+
+   - **Expected Result**: You should receive a `401 Unauthorized` response.
+
+---
+
+### Steps to Test Chat Room Management APIs
+
+1. **Test the Create Room Endpoint (`POST /api/rooms`)**:
+
+   - **Description**: Send a request to create a new chat room as an authenticated user.
+   - **Precondition**: Ensure you have a valid JWT token from the login endpoint.
+
+   ```bash
+   curl -X POST http://127.0.0.1:8080/api/rooms \
+        -H "Authorization: Bearer <your_token>" \
+        -H "Content-Type: application/json" \
+        -d '{"room_name": "testroom1"}'
+   ```
+
+   - **Expected Result**:
+     - On success, you should receive a `201 Created` response with a JSON body containing the full room data:
+
+       ```json
+       {
+         "room_id": 1,
+         "room_name": "testroom1",
+         "user_id": <your_user_id>
+       }
+       ```
+
+     - If the room name already exists, you should receive a `400 Bad Request` response indicating a duplicate room name.
+
+2. **Verify Room Creation in the Database**:
+
+   - **Description**: Check that the room was correctly created by querying the database.
+   - **Command**:
+
+     ```sql
+     SELECT * FROM rooms WHERE room_name = 'testroom1';
+     ```
+
+   - **Expected Result**: You should see an entry in the `rooms` table with the name `testroom1` and an associated `room_id`.
+
+3. **Test the Retrieve Rooms Endpoint (`GET /api/rooms`)**:
+
+   - **Description**: Retrieve a list of all available chat rooms.
+   - **Precondition**: Use a valid JWT token.
+
+   ```bash
+   curl -X GET http://127.0.0.1:8080/api/rooms \
+        -H "Authorization: Bearer <your_token>"
+   ```
+
+   - **Expected Result**:
+     
+     - You should receive a `200 OK` response with a JSON array of available rooms:
+     
+       ```json
+       {
+         "req_user_id": <your_user_id>,
+         "rooms": [
+           {
+             "room_id": 1,
+             "room_name": "testroom1",
+             "user_id": <owner_user_id>
+           }
+         ]
+       }
+       ```
+
+4. **Test the Add Member Endpoint (`POST /api/rooms/{room_id}/members`)**:
+
+   - **Description**: Add the current user to a chat room by providing the room ID.
+   - **Precondition**: Use a valid JWT token and ensure that the `room_id` you provide exists.
+
+   ```bash
+   curl -X POST http://127.0.0.1:8080/api/rooms/2/members \
+        -H "Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIzIiwidXNlcm5hbWUiOiJ0ZXN0dXNlcjEiLCJpYXQiOjE3MzA5Mjc1MzQsImV4cCI6MTczMTAxMzkzNH0.gldcbGi617wGIVHlf27GzmPATR0mw_Ml5To2KtBNmwM"
+   ```
+
+   - **Expected Result**:
+     
+     - On success, you should receive a `200 OK` response confirming that the user has joined the room:
+     
+       ```json
+       {
+         "message": "User added to the room successfully"
+       }
+       ```
+     
+     - If the specified `room_id` does not exist, you should receive a `404 Not Found` response.
+
+5. **Test the Retrieve Room Members Endpoint (`GET /api/rooms/{room_id}/members`)**:
+
+   - **Description**: Retrieve a list of all members in a specific chat room.
+   - **Precondition**: Use a valid JWT token and provide a valid `room_id`.
+
+   ```bash
+   curl -X GET http://127.0.0.1:8080/api/rooms/2/members \
+        -H "Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIzIiwidXNlcm5hbWUiOiJ0ZXN0dXNlcjEiLCJpYXQiOjE3MzA5Mjc1MzQsImV4cCI6MTczMTAxMzkzNH0.gldcbGi617wGIVHlf27GzmPATR0mw_Ml5To2KtBNmwM"
+   ```
+
+   - **Expected Result**:
+     - On success, you should receive a `200 OK` response with a JSON array of members in the specified room:
+
+       ```json
+       [
+         {
+           "user_id": 1,
+           "username": "testuser1"
+         },
+         {
+           "user_id": 2,
+           "username": "testuser2"
+         }
+       ]
+       ```
+
+     - If the `room_id` does not exist, you should receive a `404 Not Found` response.
+
+6. **Verify User-Room Relationship in the Database**:
+
+   - **Description**: Check that the user is associated with the chat room in the `user_rooms` table.
+   - **Command**:
+
+     ```sql
+     SELECT * FROM user_rooms WHERE user_id = <your_user_id> AND room_id = 1;
+     ```
+
+   - **Expected Result**: You should see an entry in the `user_rooms` table indicating the relationship between the user and the room.
+
+---
+

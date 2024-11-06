@@ -4,22 +4,33 @@ use jsonwebtoken::{encode, Header, EncodingKey};
 use chrono::Utc;
 use sqlx::SqlitePool;
 use log::{info, error};
-use crate::models::claim::Claims; // Import the Claims struct
-use serde::Deserialize; // Ensure this line is present
+use crate::models::claim::Claims;
+use serde::Deserialize;
 use crate::config::state::TOKEN_BLACKLIST;
+use utoipa::ToSchema;
+use crate::models::response::{MessageResponse, ErrorResponse, TokenResponse};
 
-#[derive(Deserialize)]
-struct RegisterData {
+#[derive(Deserialize, ToSchema)]
+pub struct RegisterData {
     username: String,
     password: String,
 }
 
-#[derive(Deserialize)]
-struct LoginData {
+#[derive(Deserialize, ToSchema)]
+pub struct LoginData {
     username: String,
     password: String,
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/register",
+    request_body = RegisterData,
+    responses(
+        (status = 201, description = "User created successfully", body = MessageResponse),
+        (status = 400, description = "User could not be created", body = ErrorResponse)
+    )
+)]
 #[post("/register")]
 async fn register_user(
     pool: web::Data<SqlitePool>,
@@ -27,8 +38,6 @@ async fn register_user(
 ) -> HttpResponse {
     let hashed_password = hash(&user_data.password, DEFAULT_COST).unwrap();
 
-    // - pool.get_ref() fetches a reference to the database connection pool, which ensures an active
-    //   connection is used for executing the query.
     let result = sqlx::query!(
         "INSERT INTO users (username, password_hash) VALUES (?, ?)",
         user_data.username,
@@ -40,24 +49,31 @@ async fn register_user(
     match result {
         Ok(_) => {
             info!("User '{}' registered successfully.", user_data.username);
-            // This sends a 201 Created status code with a success message in the response body.
-            HttpResponse::Created().body("User created successfully")
+            HttpResponse::Created().json(MessageResponse { message: "User created successfully".into() })
         }
         Err(e) => {
             error!("Failed to register user '{}': {:?}", user_data.username, e);
-            HttpResponse::BadRequest().body("User could not be created")
+            HttpResponse::BadRequest().json(ErrorResponse { error: "User could not be created".into() })
         }
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/login",
+    request_body = LoginData,
+    responses(
+        (status = 200, description = "User logged in successfully", body = TokenResponse),
+        (status = 401, description = "Unauthorized: Invalid username or password or User ID missing in token", body = ErrorResponse),
+        (status = 401, description = "Unauthorized: User ID missing in token", body = ErrorResponse)
+    )
+)]
 #[post("/login")]
 async fn login_user(
     pool: web::Data<SqlitePool>,
     login_data: web::Json<LoginData>,
 ) -> HttpResponse {
-    // - .fetch_optional() returns an Option type, yielding Some(record) if a match is found, or None if no match exists.
-    // - pool.get_ref() accesses a reference to the connection pool, providing an active connection for query execution.
-    // - The .await keyword waits for the completion of the async operation, returning the query result.
+    // Fetch user from the database based on the provided username
     let user = sqlx::query!(
         "SELECT user_id, username, password_hash, created_at FROM users WHERE username = ?",
         login_data.username
@@ -89,17 +105,28 @@ async fn login_user(
             ).unwrap();
 
             info!("User '{}' logged in successfully.", user.username);
-            return HttpResponse::Ok().json(serde_json::json!({ "token": token }));
+            return HttpResponse::Ok().json(TokenResponse { token });
         } else {
             info!("User '{}' failed to log in due to incorrect password.", login_data.username);
+            return HttpResponse::Unauthorized().json(ErrorResponse { error: "Unauthorized: Invalid username or password".into() });
         }
     } else {
         info!("Login attempt failed: user '{}' not found.", login_data.username);
+        HttpResponse::Unauthorized().json(ErrorResponse { error: "Unauthorized: User ID missing in token".into() })
     }
-
-    HttpResponse::Unauthorized().body("Invalid username or password")
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/logout",
+    responses(
+        (status = 200, description = "Logged out successfully", body = MessageResponse),
+        (status = 400, description = "Invalid or missing token", body = ErrorResponse)
+    ),
+    params(
+        ("Authorization" = String, Header, description = "Bearer <JWT Token>")
+    )
+)]
 pub async fn logout_user(req: HttpRequest) -> impl Responder {
     if let Some(auth_header) = req.headers().get("Authorization") {
         if let Ok(header_str) = auth_header.to_str() {
@@ -110,9 +137,9 @@ pub async fn logout_user(req: HttpRequest) -> impl Responder {
                     blacklist.insert(token.clone());
                     info!("Token '{}' added to blacklist. Current blacklist: {:?}", token, *blacklist);
                 }
-                return HttpResponse::Ok().json("Logged out successfully");
+                return HttpResponse::Ok().json(MessageResponse { message: "Logged out successfully".into() });
             }
         }
     }
-    HttpResponse::BadRequest().body("Invalid or missing token")
+    HttpResponse::BadRequest().json(ErrorResponse { error: "Invalid or missing token".into() })
 }

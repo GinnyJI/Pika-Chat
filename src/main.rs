@@ -6,18 +6,25 @@ mod config;
 use actix_web::{web, App, HttpServer};
 use sqlx::SqlitePool;
 use middleware::auth_middleware::AuthMiddleware;
-use routes::{register_user, login_user, logout_user, test_protected_route, create_room, join_room, get_rooms, Room, RoomInfo};
+use routes::auth::{register_user, login_user, logout_user, RegisterData, LoginData};
+use routes::room::{create_room, add_room_member, get_rooms, get_room_members, RoomMember, Room, RoomInfo, RoomsResponse};
+use routes::test_routes::test_protected_route;
+use models::response::{MessageResponse, ErrorResponse, TokenResponse};
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
 #[derive(OpenApi)]
 #[openapi(
     paths(
+        crate::routes::auth::register_user, 
+        crate::routes::auth::login_user, 
+        crate::routes::auth::logout_user,
         crate::routes::room::get_rooms, 
         crate::routes::room::create_room, 
-        crate::routes::room::join_room
+        crate::routes::room::add_room_member,
+        crate::routes::room::get_room_members
     ), 
-    components(schemas(Room, RoomInfo))
+    components(schemas(RoomMember, Room, RoomInfo, RoomsResponse, RegisterData, LoginData, MessageResponse, TokenResponse, ErrorResponse))
 )]
 struct ApiDoc;
 
@@ -71,9 +78,10 @@ async fn main() -> std::io::Result<()> {
                             .route(web::get().to(get_rooms))     // Handle GET requests to retrieve rooms
                     )
                     .service(
-                        web::resource("/rooms/{room_id}/join")
+                        web::resource("/rooms/{room_id}/members")
                             .wrap(AuthMiddleware)
-                            .route(web::post().to(join_room))
+                            .route(web::post().to(add_room_member)) // POST to add a member
+                            .route(web::get().to(get_room_members)) // GET to retrieve members
                     )
             )
     })
