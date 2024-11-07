@@ -86,7 +86,7 @@ async fn main() -> std::io::Result<()> {
             )
     })
     // Bind the server to the address and port
-    .bind(("127.0.0.1", 8080))?
+    .bind(("127.0.0.1", 80))?
     // Run the server and await its completion
     .run()
     .await

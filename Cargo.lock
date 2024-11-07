@@ -1562,7 +1562,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "rust-chat-app"
+name = "rust-chatroom-server"
 version = "0.1.0"
 dependencies = [
  "actix-rt",

@@ -359,4 +359,3 @@ The project uses Swagger UI for interactive API documentation. Follow the steps 
    - **Expected Result**: You should see an entry in the `user_rooms` table indicating the relationship between the user and the room.
 
 ---
-
