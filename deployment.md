@@ -1,6 +1,6 @@
 ## Deployment Instructions for Rust Chatroom Server to Fly.io
 
-This guide provides step-by-step instructions to set up a Linux environment, install necessary dependencies, and deploy a Rust application to Fly.io.
+This guide provides step-by-step instructions to set up a Linux environment, install necessary dependencies, prepare the database, and deploy a Rust application to Fly.io.
 
 ### Prerequisites
 
@@ -58,7 +58,7 @@ Using Multipass allows for a consistent Linux environment to build and deploy yo
 
 ---
 
-### 3. Clone and Clean Up the Rust Project
+### 3. Clone and Prepare the Rust Project
 
 1. **Clone or Transfer the Project**:
    
@@ -84,7 +84,28 @@ Using Multipass allows for a consistent Linux environment to build and deploy yo
 
 ---
 
-### 4. Install Flyctl and Deploy to Fly.io
+### 4. Set Up the Database Locally
+
+1. **Create the SQLite Database File**:
+   - Create the SQLite database file with the correct permissions:
+
+     ```bash
+     touch chat_app.db
+     chmod 664 chat_app.db
+     ```
+
+2. **Run Migrations**:
+   - Use SQLx to run the database migrations. This will initialize the database schema in `chat_app.db`:
+
+     ```bash
+     sqlx migrate run --source ./migrations
+     ```
+
+   > **Note**: This step creates and configures the database prior to deployment, meaning that Fly.io will use the pre-configured database file.
+
+---
+
+### 5. Install Flyctl and Deploy to Fly.io
 
 1. **Install Flyctl**:
    - Download and install Fly.io’s command-line tool, `flyctl`:
@@ -157,7 +178,7 @@ Using Multipass allows for a consistent Linux environment to build and deploy yo
 
 ---
 
-### 5. Verify the Deployment
+### 6. Verify the Deployment
 
 1. **Access the Application**:
    - Fly.io provides a URL for your application, such as `https://rust-chatroom-server.fly.dev`. Open this URL in your browser or use `curl` to test:
