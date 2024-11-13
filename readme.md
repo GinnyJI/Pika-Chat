@@ -1,29 +1,32 @@
 ## Project Structure
 
 ```graphql
-migrations/          
-├── 0001_create_users.sql              # SQL migration for creating the users table
-└── 0002_create_rooms_and_user_rooms.sql # SQL migration for creating chat rooms and user-room relationship tables
+migrations/        
+├── 0001_create_users.sql                # SQL migration (SQLite) for creating the users table
+└── 0002_create_rooms_and_user_rooms.sql # SQL migration (SQLite) for creating chat rooms and user-room relationship tables
 src/
-├── config/                            # Configuration-related files, including state management and app settings
-│   ├── mod.rs                         # Module entry point for the config folder
-│   └── state.rs                       # Manages the application state and configurations
-├── middleware/                        # Middleware implementations for handling request processing
-│   ├── auth_middleware.rs             # Middleware for JWT-based authentication
-│   └── mod.rs                         # Module entry point for middleware
-├── models/                            # Data models representing database structures and entities
-│   ├── mod.rs                         # Module entry point for models
-│   ├── claim.rs                       # Struct for JWT claims
-│   ├── response.rs                    # Structs for standardized response
-│   ├── user.rs                        # Model definition for user-related data
-│   ├── room.rs                        # Model for chat room data
-│   └── user_room.rs                   # Model for user-room relationships
-├── routes/                            # Handlers for different application routes
-│   ├── auth.rs                        # Route handlers for authentication (e.g., register, login)
-│   ├── room.rs                        # Route handlers for chat room creation and management
-│   ├── test_routes.rs                 # Route for testing middleware functionality
-│   └── mod.rs                         # Module entry point for exporting all routes
-├── main.rs                            # Main application entry point with Actix Web server setup
+├── config/                              # Configuration-related files, including state management and app settings
+│   ├── mod.rs                           # Module entry point for the config folder
+│   └── state.rs                         # Manages the application state and configurations
+├── middleware/                          # Middleware implementations for handling request processing
+│   ├── auth_middleware.rs               # Middleware for JWT-based authentication
+│   └── mod.rs                           # Module entry point for middleware
+├── models/                              # Data models representing database structures and entities
+│   ├── mod.rs                           # Module entry point for models
+│   ├── claim.rs                         # Struct for JWT claims
+│   ├── response.rs                      # Structs for standardized response
+│   ├── user.rs                          # Model definition for user-related data
+│   ├── room.rs                          # Model for chat room data
+│   └── user_room.rs                     # Model for user-room relationships
+├── routes/                              # Handlers for different application routes
+│   ├── auth.rs                          # Route handlers for authentication (e.g., register, login)
+│   ├── room.rs                          # Route handlers for chat room creation and management
+│   ├── test_routes.rs                   # Route for testing middleware functionality
+│   └── mod.rs                           # Module entry point for exporting all routes
+├── websockets/                          # WebSocket handlers for real-time chat functionality
+│   ├── chat_session.rs                  # WebSocket handler for individual chat sessions
+│   └── mod.rs                           # Module entry point for WebSocket handling
+├── main.rs                              # Main application entry point with Actix Web server setup
 ```
 
 ## Steps to Run the Project
@@ -155,7 +158,7 @@ The project uses Swagger UI for interactive API documentation. Follow the steps 
      ```bash
      curl -X POST http://127.0.0.1:8080/api/register \
           -H "Content-Type: application/json" \
-          -d '{"username": "testuser1", "password": "password123"}'
+          -d '{"username": "testuser2", "password": "password123"}'
      ```
 
    - Verify that you receive a `201 Created` response, indicating the user was created successfully.
@@ -178,7 +181,7 @@ The project uses Swagger UI for interactive API documentation. Follow the steps 
      ```bash
      curl -X POST http://127.0.0.1:8080/api/login \
           -H "Content-Type: application/json" \
-          -d '{"username": "testuser3", "password": "password123"}'
+          -d '{"username": "testuser1", "password": "password123"}'
      ```
 
    - Confirm that you receive a `200 OK` response with a token in the response body. Save this token for the logout test.
@@ -190,7 +193,7 @@ The project uses Swagger UI for interactive API documentation. Follow the steps 
 
      ```bash
      curl -X POST http://127.0.0.1:8080/api/logout \
-          -H "Authorization: Bearer <your_token_here>"
+          -H "Authorization: Bearer $TOKEN"
      ```
 
    - Replace `<your_token_here>` with the actual token received from the login response.
@@ -204,7 +207,7 @@ The project uses Swagger UI for interactive API documentation. Follow the steps 
    - Use `curl` to send a request with a valid token to a protected route:
 
      ```bash
-     curl -H "Authorization: Bearer <your_valid_token>" http://127.0.0.1:8080/api/test-protected
+     curl -H "Authorization: Bearer $TOKEN" http://127.0.0.1:8080/api/test-protected
      ```
 
    - Replace `<your_valid_token>` with a JWT that is accepted by your application.
@@ -215,7 +218,7 @@ The project uses Swagger UI for interactive API documentation. Follow the steps 
    - Use `curl` to send a request with an invalid token:
 
      ```bash
-     curl -H "Authorization: Bearer invalid_token" http://127.0.0.1:8080/api/test-protected
+     curl -H "Authorization: Bearer $TOKEN" http://127.0.0.1:8080/api/test-protected
      ```
 
    - **Expected Result**: You should receive a `401 Unauthorized` response.
@@ -241,7 +244,7 @@ The project uses Swagger UI for interactive API documentation. Follow the steps 
 
    ```bash
    curl -X POST http://127.0.0.1:8080/api/rooms \
-        -H "Authorization: Bearer <your_token>" \
+        -H "Authorization: Bearer $TOKEN" \
         -H "Content-Type: application/json" \
         -d '{"room_name": "testroom1"}'
    ```
@@ -277,7 +280,7 @@ The project uses Swagger UI for interactive API documentation. Follow the steps 
 
    ```bash
    curl -X GET http://127.0.0.1:8080/api/rooms \
-        -H "Authorization: Bearer <your_token>"
+        -H "Authorization: Bearer $TOKEN"
    ```
 
    - **Expected Result**:
@@ -304,7 +307,7 @@ The project uses Swagger UI for interactive API documentation. Follow the steps 
 
    ```bash
    curl -X POST http://127.0.0.1:8080/api/rooms/2/members \
-        -H "Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIzIiwidXNlcm5hbWUiOiJ0ZXN0dXNlcjEiLCJpYXQiOjE3MzA5Mjc1MzQsImV4cCI6MTczMTAxMzkzNH0.gldcbGi617wGIVHlf27GzmPATR0mw_Ml5To2KtBNmwM"
+        -H "Authorization: Bearer $TOKEN"
    ```
 
    - **Expected Result**:
@@ -326,7 +329,7 @@ The project uses Swagger UI for interactive API documentation. Follow the steps 
 
    ```bash
    curl -X GET http://127.0.0.1:8080/api/rooms/2/members \
-        -H "Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIzIiwidXNlcm5hbWUiOiJ0ZXN0dXNlcjEiLCJpYXQiOjE3MzA5Mjc1MzQsImV4cCI6MTczMTAxMzkzNH0.gldcbGi617wGIVHlf27GzmPATR0mw_Ml5To2KtBNmwM"
+        -H "Authorization: Bearer $TOKEN"
    ```
 
    - **Expected Result**:
@@ -359,3 +362,138 @@ The project uses Swagger UI for interactive API documentation. Follow the steps 
    - **Expected Result**: You should see an entry in the `user_rooms` table indicating the relationship between the user and the room.
 
 ---
+
+### Steps to Test WebSocket Chat Functionality
+
+#### Step 1: Obtain JWT Token
+
+Use the following `curl` command to log in and obtain a JWT token. This token will be used for authenticating both the REST API requests and the WebSocket connection.
+
+```bash
+TOKEN=$(curl -X POST http://127.0.0.1:8080/api/login \
+     -H "Content-Type: application/json" \
+     -d '{"username": "testuser1", "password": "password123"}' | sed -n 's/.*"token":"\([^"]*\)".*/\1/p')
+```
+
+#### Step 2: Create a Chat Room
+
+1. **Add a Room**:
+   
+   Use the following `curl` command to create a new chat room. This room will be identified by a unique room ID.
+
+   ```bash
+   curl -X POST http://127.0.0.1:8080/api/rooms \
+        -H "Authorization: Bearer $TOKEN" \
+        -H "Content-Type: application/json" \
+        -d '{"room_name": "testroom1"}'
+   ```
+
+2. **View Room Info (to Get Room ID)**:
+   
+   Run this command to list all rooms and get the room ID for the newly created room.
+
+   ```bash
+   curl -X GET http://127.0.0.1:8080/api/rooms \
+        -H "Authorization: Bearer $TOKEN"
+   ```
+
+   The response will include the room ID, which will be needed for the next steps.
+
+#### Step 3: Add User to the Room
+
+To allow a user to join a room via WebSocket, they must first be added as a member of that room. Use the room ID from the previous step.
+
+```bash
+curl -X POST http://127.0.0.1:8080/api/rooms/<room_id>/members \
+     -H "Authorization: Bearer $TOKEN"
+```
+
+Replace `<room_id>` with the actual room ID obtained in Step 2.
+
+#### Step 4: Connect to the Chat Room Using Websocat
+
+1. **Install Websocat** (if not installed):
+
+   ```bash
+   cargo install websocat
+   ```
+
+2. **Join the WebSocket Room**:
+
+   Use `websocat` to connect to the WebSocket endpoint of the specified chat room, including the JWT token in the `Authorization` header.
+
+   ```bash
+   websocat -H="Authorization: Bearer $TOKEN" ws://127.0.0.1:8080/ws/rooms/<room_id>
+   ```
+
+   Replace `<room_id>` with the room ID from Step 2.
+
+#### Step 5: Send and Receive Messages
+
+1. **Send a Message**:
+
+   - After connecting to the WebSocket room using `websocat`, type messages directly into the terminal.
+   - Type a message (e.g., `Hello, everyone!`) and press **Enter**. This message will be sent to the WebSocket server and should be broadcasted to all users connected to the same room.
+
+   **Example**:
+
+   ```plaintext
+   Hello, everyone!
+   ```
+
+2. **View Received Messages**:
+
+   - Any message sent by you or other users in the same chat room will appear in your terminal in real time.
+   - For example, if another user in the room sends a message, it will be displayed in your `websocat` terminal as soon as the server broadcasts it.
+
+   **Example Output**:
+
+   ```plaintext
+   User 2: Hello, everyone!
+   ```
+
+3. **Multiple Sessions for Testing**:
+
+   - Open additional terminal windows or tabs and run the same `websocat` command to simulate multiple users in the chat room.
+   - Each session should display any message sent by others, allowing you to test real-time broadcasting of messages.
+
+4. **Message Flow Example**:
+
+   - In terminal 1:
+
+     ```plaintext
+     Hello from User 1!
+     ```
+
+     Expected output in terminal 2:
+
+     ```plaintext
+     User 1: Hello from User 1!
+     ```
+
+   - In terminal 2:
+
+     ```plaintext
+     Hi User 1, this is User 2!
+     ```
+
+     Expected output in terminal 1:
+
+     ```plaintext
+     User 2: Hi User 1, this is User 2!
+     ```
+
+#### Step 6: User Join/Leave Notifications
+
+1. **Join Notifications**:
+
+   When a new `websocat` session connects to the room, all connected users should see a message like `"User <ID> has joined the room."`
+
+2. **Leave Notifications**:
+
+   When a `websocat` session disconnects (e.g., by pressing `Ctrl+C`), remaining users should see a message like `"User <ID> has left the room."`
+
+
+
+
+

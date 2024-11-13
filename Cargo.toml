@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+actix = "0.13"
 actix-web = "4.0"          # Web framework
 jsonwebtoken = "8.1"       # JWT handling
 sqlx = { version = "0.6", features = ["runtime-actix-native-tls", "sqlite"] } # ORM
@@ -21,3 +22,4 @@ actix-service = "2.0"   # For the Service trait
 lazy_static = "1.4"
 utoipa = "2"
 utoipa-swagger-ui = { version = "2", features = ["actix-web"] }
+actix-web-actors = "4"  # WebSocket actor support

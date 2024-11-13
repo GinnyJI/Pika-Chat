@@ -3,6 +3,7 @@
 Team members: Ginny Ji (1002492698), Xinyi Gong (1002109826)
 
 ## Motivation
+
 Our motivation for this project results from a need within the Rust ecosystem: the absence of a robust, lightweight, scalable, and secure real-time chat application. While chat applications are abundant in other programming languages, there is a **notable lack of open-source Rust-based solutions** that emphasize both security and scalability. This gap represents an opportunity to leverage Rust’s inherent advantages, such as **memory safety, concurrency handling, and high performance**, to create an application that serves as a benchmark for real-time communication.
 
 Building a real-time chat application in Rust is particularly compelling because of the language’s guarantees of **memory safety without a garbage collector**. This unique characteristic enables developers to create high-performance applications that can scale effectively while minimizing common security vulnerabilities. Additionally, our project aims to demonstrate how **Rust’s asynchronous programming model** and efficient memory management can be harnessed to handle multiple concurrent users with minimal latency.
@@ -12,9 +13,11 @@ By addressing this gap, our project will not only fill a void in the Rust ecosys
 ## Objective and Key Features
 
 ### Objective
+
 Our primary objective is to develop a **scalable and high-performance real-time chat application** built entirely in Rust. This application will enable users to create rooms, send messages instantly, and monitor other users' online or offline status. By leveraging Rust’s **performance benefits and memory safety guarantees**, we aim to deliver a secure and responsive user experience. This project will serve as a comprehensive case study on how Rust can be used to create robust, real-time communication systems, filling a critical gap in the Rust ecosystem while contributing valuable knowledge and resources to the community.
 
 ### Key Features
+
 1. **User Authentication**: Implement secure user sign-up, login, and session management using JWTs to ensure a reliable and protected user experience, preventing unauthorized access.
 2. **Chat Room Management**: Allow users to create and join chat rooms for topic-based discussions, facilitating seamless and flexible communication.
 3. **Real-Time Messaging**: Use WebSocket technology for instant message delivery, ensuring a lag-free experience within chat rooms.
@@ -43,12 +46,11 @@ Our primary objective is to develop a **scalable and high-performance real-time 
 6. **Modular and Maintainable Codebase**:
    The design follows best practices with a clear **separation of concerns** between route handlers and data models, ensuring the application is easy to extend and adapt. This modular structure encourages reasonable work distribution among team members and aligns with industry standards for clean, maintainable code.
 
-
 ### Optional optimizations
+
 1. Set up a performance monitoring to measure and log latency under various load conditions. Set a performance goal of maintaining sub-100ms message latency under a load of up to 1,000 concurrent users.
 
 2. Employ additional best practices to mitigate common vulnerabilities (e.g., CSRF, XSS) and incorporate TLS for secure data transmission.
-
 
 ### Endpoint Design
 
@@ -59,12 +61,12 @@ Note: All endpoints requiring authentication will be protected using JWT validat
      - **Description**: Registers a new user by creating an account. Include validation rules, such as a minimum password length or disallowed characters.
      - **Request Body**: `{ "username": "string", "password": "string" }`
      - **Response**: Returns `201 Created` with confirmation if successful, or `400 Bad Request` for input errors.
-   
+
    - POST `/login`
      - **Description**: Authenticates a user and issues a JWT token upon successful login.
      - **Request Body**: `{ "username": "string", "password": "string" }`
      - **Response**: `{ "token": "string" }` on success, or `401 Unauthorized` if authentication fails.
-   
+
    - POST `/logout` (authenticated)
      - **Description**: Logs out a user by invalidating their session or updating their status.
      - **Request Header**: `Authorization: Bearer <JWT Token>`
@@ -75,7 +77,7 @@ Note: All endpoints requiring authentication will be protected using JWT validat
      - **Description**: Allows users to create new chat rooms.
      - **Request Body**: `{ "room_name": "string" }`
      - **Response**: Returns `{ "room_id": "int" }` on success, or `400 Bad Request` for input errors.
-   
+
    - GET `/rooms`  
      - **Description**: Retrieves a list of all available chat rooms.
      - **Response**: An array of room objects `[ { "room_id": "int", "room_name": "string" } ]`.
@@ -177,5 +179,3 @@ Note: All endpoints requiring authentication will be protected using JWT validat
     - *Teammate 2*: Configure deployment environment variables and database connectivity, and conduct integration tests to ensure smooth frontend-backend interaction.
     - **Collaboration**: Perform joint load testing to ensure app stability under concurrent use. Draft the README and setup instructions, create architectural diagrams, and record a project demo video.
   - **Outcome**: A fully deployed, optimized chat application with complete project documentation and a demonstration video.
-
-  

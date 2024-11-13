@@ -2,16 +2,19 @@ mod routes;
 mod middleware;
 mod models;
 mod config;
+mod websockets;
 
+use actix::Actor;
 use actix_web::{web, App, HttpServer};
 use sqlx::SqlitePool;
 use middleware::auth_middleware::AuthMiddleware;
 use routes::auth::{register_user, login_user, logout_user, RegisterData, LoginData};
-use routes::room::{create_room, add_room_member, get_rooms, get_room_members, RoomMember, Room, RoomInfo, RoomsResponse};
+use routes::room::{create_room, add_room_member, get_rooms, get_room_members, join_room_ws, RoomMember, Room, RoomInfo, RoomsResponse};
 use routes::test_routes::test_protected_route;
 use models::response::{MessageResponse, ErrorResponse, TokenResponse};
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
+use websockets::chat_session::RoomServer;
 
 #[derive(OpenApi)]
 #[openapi(
@@ -22,7 +25,8 @@ use utoipa_swagger_ui::SwaggerUi;
         crate::routes::room::get_rooms, 
         crate::routes::room::create_room, 
         crate::routes::room::add_room_member,
-        crate::routes::room::get_room_members
+        crate::routes::room::get_room_members,
+        crate::routes::room::join_room_ws
     ), 
     components(schemas(RoomMember, Room, RoomInfo, RoomsResponse, RegisterData, LoginData, MessageResponse, TokenResponse, ErrorResponse))
 )]
@@ -39,6 +43,7 @@ async fn main() -> std::io::Result<()> {
 
     // Establish a connection pool to the SQLite database using SQLx
     let pool = SqlitePool::connect(&std::env::var("DATABASE_URL").unwrap()).await.unwrap();
+    let room_server = RoomServer::new().start();
 
     // Configure and run the Actix Web HTTP server
     HttpServer::new(move || {
@@ -48,6 +53,12 @@ async fn main() -> std::io::Result<()> {
             .service(
                 SwaggerUi::new("/swagger-ui/{_:.*}")
                     .url("/api-doc/openapi.json", ApiDoc::openapi()),
+            )
+            .app_data(web::Data::new(room_server.clone()))
+            .service(
+                web::resource("/ws/rooms/{room_id}")
+                    .wrap(AuthMiddleware)  // Add authentication middleware here
+                    .route(web::get().to(join_room_ws)),
             )
             // Scope all routes under `/api`
             .service(
@@ -86,7 +97,7 @@ async fn main() -> std::io::Result<()> {
             )
     })
     // Bind the server to the address and port
-    .bind(("127.0.0.1", 80))?
+    .bind(("127.0.0.1", 8080))?
     // Run the server and await its completion
     .run()
     .await

@@ -1,9 +1,12 @@
 use actix_web::{HttpResponse, Responder, web, HttpRequest, HttpMessage};
 use sqlx::SqlitePool;
 use serde::{Deserialize, Serialize};
-use log::info;
 use utoipa::ToSchema;
 use crate::models::response::{MessageResponse, ErrorResponse};
+use actix::Addr;
+use actix_web_actors::ws;
+use crate::websockets::chat_session::{ChatSession, RoomServer};
+use log::{error, info};
 
 #[derive(Deserialize, ToSchema)]
 pub struct RoomInfo {
@@ -222,4 +225,90 @@ pub async fn add_room_member(
     } else {
         HttpResponse::Unauthorized().json(ErrorResponse { error: "User ID missing in token".into() })
     }
+}
+
+#[utoipa::path(
+    get,
+    path = "/ws/rooms/{room_id}",
+    params(
+        ("room_id" = i64, Path, description = "Room ID to join via WebSocket"),
+        ("Authorization" = String, Header, description = "Bearer <JWT Token>")
+    ),
+    responses(
+        (status = 101, description = "Switching Protocols to WebSocket"),
+        (status = 401, description = "Unauthorized: User ID missing in token", body = ErrorResponse),
+        (status = 404, description = "Not Found: Room does not exist or user is not a member", body = ErrorResponse),
+        (status = 500, description = "Internal Server Error", body = ErrorResponse),
+    )
+)]
+pub async fn join_room_ws(
+    req: HttpRequest,
+    stream: web::Payload,
+    room_id: web::Path<i64>,
+    room_server: web::Data<Addr<RoomServer>>,
+    pool: web::Data<SqlitePool>,
+) -> Result<HttpResponse, actix_web::Error> {
+    // Extract user_id from the request extensions set by AuthMiddleware
+    let user_id = match req.extensions().get::<i64>() {
+        Some(id) => *id,
+        None => {
+            error!("User ID not found in request extensions");
+            return Ok(HttpResponse::Unauthorized().json(ErrorResponse { error: "User ID not found".to_string() }));
+        }
+    };
+
+    let room_id = room_id.into_inner();
+    info!("Attempting to join room with ID: {}", room_id);
+
+    // Check if the room exists
+    let room_exists = match sqlx::query_scalar!(
+        "SELECT EXISTS(SELECT 1 FROM rooms WHERE room_id = ?)",
+        room_id
+    )
+    .fetch_one(pool.get_ref())
+    .await
+    {
+        Ok(exists) => {
+            info!("Room existence check for room_id {}: {}", room_id, exists != 0);
+            exists != 0
+        }
+        Err(e) => {
+            error!("Database error checking if room exists: {}", e);
+            return Ok(HttpResponse::InternalServerError().json(ErrorResponse { error: "Database error".to_string() }));
+        }
+    };
+
+    if !room_exists {
+        error!("Room does not exist for room_id: {}", room_id);
+        return Ok(HttpResponse::NotFound().json(ErrorResponse { error: "Room does not exist".to_string() }));
+    }
+
+    // Check if the user is a member of the room
+    let is_member = match sqlx::query_scalar!(
+        "SELECT EXISTS(SELECT 1 FROM user_rooms WHERE room_id = ? AND user_id = ?)",
+        room_id,
+        user_id
+    )
+    .fetch_one(pool.get_ref())
+    .await
+    {
+        Ok(member) => {
+            info!("Membership check for user_id {} in room_id {}: {}", user_id, room_id, member != 0);
+            member != 0
+        }
+        Err(e) => {
+            error!("Database error checking if user is a member of the room: {}", e);
+            return Ok(HttpResponse::InternalServerError().json(ErrorResponse { error: "Database error".to_string() }));
+        }
+    };
+
+    if !is_member {
+        error!("User {} is not a member of room {}", user_id, room_id);
+        return Ok(HttpResponse::NotFound().json(ErrorResponse { error: "User is not a member of the room".to_string() }));
+    }
+
+    // Create a new chat session with the extracted user_id
+    info!("Starting WebSocket session for user {} in room {}", user_id, room_id);
+    let session = ChatSession::new(room_id, user_id, room_server.get_ref().clone());
+    ws::start(session, &req, stream)
 }
