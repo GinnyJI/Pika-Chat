@@ -181,11 +181,8 @@ Using Multipass allows for a consistent Linux environment to build and deploy yo
 ### 6. Verify the Deployment
 
 1. **Access the Application**:
-   - Fly.io provides a URL for your application, such as `https://rust-chatroom-server.fly.dev`. Open this URL in your browser or use `curl` to test:
 
-     ```bash
-     curl https://rust-chatroom-server.fly.dev
-     ```
+   - Visit [swagger document](https://rust-chatroom-server.fly.dev/swagger-ui/)
 
 2. **Test API Endpoints**:
    - Use `curl` or Postman to test various endpoints, like `/api/register`:
@@ -202,6 +199,59 @@ Using Multipass allows for a consistent Linux environment to build and deploy yo
      ```bash
      flyctl logs
      ```
+
+---
+
+### 7. Accessing the Console and Exiting
+
+#### Access the Fly.io Console
+
+1. **Open an SSH Session to Your Fly.io App**:
+
+   Use `flyctl ssh console` to open an interactive session in your deployed application’s container.
+
+   ```bash
+   flyctl ssh console
+   ```
+
+   This will connect you to the running instance of your app on Fly.io, allowing you to access files, check the database, and run commands.
+
+2. **Inspect Files and Database**:
+
+   Once inside, you can use commands to navigate and inspect files. For example, to check if the SQLite database file exists, you can use:
+
+   ```bash
+   ls /app/chat_app.db
+   ```
+
+   If you need to install `sqlite3` to query the database, you can do so with:
+
+   ```bash
+   apt update
+   apt install -y sqlite3
+   ```
+
+   After installation, you can open the SQLite database by running:
+
+   ```bash
+   sqlite3 /app/chat_app.db
+   ```
+
+   **Note**: Make sure you exit the SQLite prompt after finishing, by typing `.exit`.
+
+#### Exit the Fly.io Console
+
+1. **Type `exit`**:
+
+   To close the console session, simply type `exit` and press **Enter**:
+
+   ```bash
+   exit
+   ```
+
+2. **Press `Ctrl+D`**:
+
+   Alternatively, you can press **Ctrl+D** to exit the session.
 
 ---
 
