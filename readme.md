@@ -158,7 +158,7 @@ The project uses Swagger UI for interactive API documentation. Follow the steps 
      ```bash
      curl -X POST http://127.0.0.1:8080/api/register \
           -H "Content-Type: application/json" \
-          -d '{"username": "testuser2", "password": "password123"}'
+          -d '{"username": "testuser1", "password": "password123"}'
      ```
 
    - Verify that you receive a `201 Created` response, indicating the user was created successfully.
@@ -285,30 +285,31 @@ The project uses Swagger UI for interactive API documentation. Follow the steps 
 
    - **Expected Result**:
      
-     - You should receive a `200 OK` response with a JSON array of available rooms:
+     You should receive a `200 OK` response with a JSON array of available rooms:
      
-       ```json
-       {
-         "req_user_id": <your_user_id>,
-         "rooms": [
-           {
-             "room_id": 1,
-             "room_name": "testroom1",
-             "user_id": <owner_user_id>
-           }
-         ]
-       }
-       ```
+     ```json
+     {
+       "req_user_id": <your_user_id>,
+       "rooms": [
+         {
+           "room_id": 1,
+           "room_name": "testroom1",
+           "user_id": <owner_user_id>
+         }
+       ]
+     }
+     ```
 
 4. **Test the Add Member Endpoint (`POST /api/rooms/{room_id}/members`)**:
 
    - **Description**: Add the current user to a chat room by providing the room ID.
+
    - **Precondition**: Use a valid JWT token and ensure that the `room_id` you provide exists.
 
-   ```bash
-   curl -X POST http://127.0.0.1:8080/api/rooms/2/members \
-        -H "Authorization: Bearer $TOKEN"
-   ```
+     ```bash
+     curl -X POST http://127.0.0.1:8080/api/rooms/2/members \
+          -H "Authorization: Bearer $TOKEN"
+     ```
 
    - **Expected Result**:
      
@@ -325,30 +326,32 @@ The project uses Swagger UI for interactive API documentation. Follow the steps 
 5. **Test the Retrieve Room Members Endpoint (`GET /api/rooms/{room_id}/members`)**:
 
    - **Description**: Retrieve a list of all members in a specific chat room.
+
    - **Precondition**: Use a valid JWT token and provide a valid `room_id`.
 
-   ```bash
-   curl -X GET http://127.0.0.1:8080/api/rooms/2/members \
-        -H "Authorization: Bearer $TOKEN"
-   ```
+     ```bash
+     curl -X GET http://127.0.0.1:8080/api/rooms/2/members \
+          -H "Authorization: Bearer $TOKEN"
+     ```
 
    - **Expected Result**:
-     - On success, you should receive a `200 OK` response with a JSON array of members in the specified room:
-
-       ```json
-       [
-         {
-           "user_id": 1,
-           "username": "testuser1"
-         },
-         {
-           "user_id": 2,
-           "username": "testuser2"
-         }
-       ]
-       ```
-
-     - If the `room_id` does not exist, you should receive a `404 Not Found` response.
+     
+     On success, you should receive a `200 OK` response with a JSON array of members in the specified room:
+     
+     ```json
+     [
+       {
+         "user_id": 1,
+         "username": "testuser1"
+       },
+       {
+         "user_id": 2,
+         "username": "testuser2"
+       }
+     ]
+     ```
+     
+     If the `room_id` does not exist, you should receive a `404 Not Found` response.
 
 6. **Verify User-Room Relationship in the Database**:
 
