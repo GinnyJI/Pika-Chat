@@ -61,15 +61,15 @@ Using Multipass allows for a consistent Linux environment to build and deploy yo
 ### 3. Clone and Prepare the Rust Project
 
 1. **Clone or Transfer the Project**:
-   
+
    - Clone the repository to your VM or transfer your project files:
-   
+
      ```bash
-     git clone https://github.com/yourusername/rust-chatroom-server.git
+     git clone https://github.com/HesterG/rust-chat-app.git
      cd rust-chatroom-server
      ```
-   
-3. **Remove Hidden Files in the Migrations Folder**:
+
+2. **Remove Hidden Files in the Migrations Folder**:
    - Sometimes, hidden files can cause SQLx migration errors. Check for any unexpected files in the `migrations` directory:
 
      ```bash
