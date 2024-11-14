@@ -1,6 +1,7 @@
 use actix::{Actor, StreamHandler, Context, Addr, Message, Handler, AsyncContext};
 use actix_web_actors::ws;
 use std::collections::{HashMap, HashSet};
+use crate::models::presence::{GetRoomPresence, UserPresence};
 
 // Define RoomId and UserId types for better readability
 pub type RoomId = i64;
@@ -41,6 +42,7 @@ impl Message for RemoveUser {
 pub struct RoomServer {
     rooms: HashMap<RoomId, HashSet<UserId>>,               // Tracks user IDs in each room
     user_sessions: HashMap<UserId, Addr<ChatSession>>,      // Tracks active sessions by user ID
+    user_presence: HashMap<UserId, bool>,                   // Tracks online/offline status of each user
 }
 
 impl RoomServer {
@@ -49,6 +51,7 @@ impl RoomServer {
         RoomServer {
             rooms: HashMap::new(),
             user_sessions: HashMap::new(),
+            user_presence: HashMap::new(),
         }
     }
 
@@ -56,19 +59,21 @@ impl RoomServer {
     pub fn add_user(&mut self, room_id: RoomId, user_id: UserId, addr: Addr<ChatSession>) {
         self.rooms.entry(room_id).or_insert_with(HashSet::new).insert(user_id);
         self.user_sessions.insert(user_id, addr);
+        self.user_presence.insert(user_id, true);                                // Set user as online
     }
 
-    // Removes a user from a specified room.
+    // Removes a user from a specified room, marking them as offline
     pub fn remove_user(&mut self, room_id: RoomId, user_id: UserId) {
         if let Some(users) = self.rooms.get_mut(&room_id) {
-            users.remove(&user_id);
-            if users.is_empty() {
+            users.remove(&user_id);                   // Remove user from room set
+            self.user_presence.insert(user_id, false); // Mark user as offline
+            if users.is_empty() {                     // If no users left, remove the room
                 self.rooms.remove(&room_id);
             }
         }
-        self.user_sessions.remove(&user_id);
-    }
-
+        self.user_sessions.remove(&user_id);          // Remove user's active session
+    }    
+    
     // Broadcasts a message to all users in a specified room.
     fn broadcast_to_room(&self, room_id: RoomId, message: &str) {
         if let Some(user_ids) = self.rooms.get(&room_id) {
@@ -79,6 +84,38 @@ impl RoomServer {
             }
         }
     }
+
+    // Sets a user's presence to online.
+    pub fn set_user_online(&mut self, user_id: UserId) {
+        self.user_presence.insert(user_id, true);
+    }
+
+    // Sets a user's presence to offline.
+    pub fn set_user_offline(&mut self, user_id: UserId) {
+        self.user_presence.insert(user_id, false);
+    }
+
+    // Retrieves the presence status of all users in a room, including offline users
+    pub fn get_room_presence(&self, room_id: RoomId) -> Vec<UserPresence> {
+        let mut presence_list = Vec::new();
+    
+        if let Some(user_ids) = self.rooms.get(&room_id) {
+            // Track presence of users who are currently in the room (online)
+            for &user_id in user_ids {
+                let is_online = *self.user_presence.get(&user_id).unwrap_or(&false);
+                presence_list.push(UserPresence::new(user_id, is_online));
+            }
+        }
+    
+        // Add users who were in the room but are now offline, based on user_presence
+        for (&user_id, &is_online) in &self.user_presence {
+            if !is_online && self.user_presence.contains_key(&user_id) {
+                presence_list.push(UserPresence::new(user_id, is_online));
+            }
+        }
+    
+        presence_list
+    }    
 }
 
 impl Actor for RoomServer {
@@ -101,6 +138,7 @@ impl Handler<AddUser> for RoomServer {
 
     fn handle(&mut self, msg: AddUser, _: &mut Self::Context) {
         self.add_user(msg.room_id, msg.user_id, msg.addr);
+        self.set_user_online(msg.user_id); // Set user as online when added
         println!("User {} added to room {}", msg.user_id, msg.room_id);
     }
 }
@@ -111,7 +149,17 @@ impl Handler<RemoveUser> for RoomServer {
 
     fn handle(&mut self, msg: RemoveUser, _: &mut Self::Context) {
         self.remove_user(msg.room_id, msg.user_id);
+        self.set_user_offline(msg.user_id); // Set user as offline when removed
         println!("User {} removed from room {}", msg.user_id, msg.room_id);
+    }
+}
+
+// Handler for GetRoomPresence to get the presence status of all users in a room.
+impl Handler<GetRoomPresence> for RoomServer {
+    type Result = Vec<UserPresence>;
+
+    fn handle(&mut self, msg: GetRoomPresence, _: &mut Self::Context) -> Self::Result {
+        self.get_room_presence(msg.room_id)
     }
 }
 

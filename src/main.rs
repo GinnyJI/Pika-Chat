@@ -9,15 +9,17 @@ use actix_web::{web, App, HttpServer};
 use sqlx::SqlitePool;
 use middleware::auth_middleware::AuthMiddleware;
 use routes::auth::{register_user, login_user, logout_user, RegisterData, LoginData};
-use routes::room::{create_room, add_room_member, get_rooms, get_room_members, join_room_ws, RoomMember, Room, RoomInfo, RoomsResponse};
+use routes::room::{create_room, add_room_member, get_rooms, get_room_members, join_room_ws, get_user_presence, RoomMember, Room, RoomInfo, RoomsResponse};
 use routes::test_routes::test_protected_route;
 use models::response::{MessageResponse, ErrorResponse, TokenResponse};
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 use websockets::chat_session::RoomServer;
-
+// Allow the ApiDoc struct to serve as a container for OpenAPI documentation
+// generated based on the specified paths and components.
 #[derive(OpenApi)]
 #[openapi(
+    // Specify the endpoints (paths) that should be included in the documentation.
     paths(
         crate::routes::auth::register_user, 
         crate::routes::auth::login_user, 
@@ -26,10 +28,15 @@ use websockets::chat_session::RoomServer;
         crate::routes::room::create_room, 
         crate::routes::room::add_room_member,
         crate::routes::room::get_room_members,
-        crate::routes::room::join_room_ws
-    ), 
+        crate::routes::room::join_room_ws,
+        crate::routes::room::get_user_presence
+    ),
+    // Define all the schemas (data structures) that will be used in the API documentation.
     components(schemas(RoomMember, Room, RoomInfo, RoomsResponse, RegisterData, LoginData, MessageResponse, TokenResponse, ErrorResponse))
 )]
+// Empty struct ApiDoc serves as the root for the OpenAPI spec.
+// #[openapi(...)] generates a full OpenAPI spec, including all paths and schemas.
+// utoipa uses this to consolidate documentation within ApiDoc.
 struct ApiDoc;
 
 // Macro to mark the main function as an Actix Web entry point
@@ -43,6 +50,10 @@ async fn main() -> std::io::Result<()> {
 
     // Establish a connection pool to the SQLite database using SQLx
     let pool = SqlitePool::connect(&std::env::var("DATABASE_URL").unwrap()).await.unwrap();
+    // Initialize a new instance of RoomServer (managing chat rooms) and start it as an Actor.
+    // This actor will handle WebSocket communication for room sessions.
+    // Calling start() on RoomServer here starts the actor and calls its `started` method (if implemented),
+    // signaling the actor is ready to receive and process messages.
     let room_server = RoomServer::new().start();
 
     // Configure and run the Actix Web HTTP server
@@ -73,14 +84,14 @@ async fn main() -> std::io::Result<()> {
                             .wrap(AuthMiddleware)
                             .route(web::post().to(logout_user))
                     )
-                    
+
                     // Register the test route with AuthMiddleware for testing
                     .service(
                         web::resource("/test-protected")
                             .wrap(AuthMiddleware)
                             .route(web::get().to(test_protected_route))
                     )
-                    
+
                     // Register protected routes for chat room management
                     .service(
                         web::resource("/rooms")
@@ -93,6 +104,11 @@ async fn main() -> std::io::Result<()> {
                             .wrap(AuthMiddleware)
                             .route(web::post().to(add_room_member)) // POST to add a member
                             .route(web::get().to(get_room_members)) // GET to retrieve members
+                    )
+                    .service(
+                        web::resource("/users/presence/{room_id}")
+                            .wrap(AuthMiddleware)
+                            .route(web::get().to(get_user_presence)),
                     )
             )
     })

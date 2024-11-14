@@ -7,6 +7,7 @@ use actix::Addr;
 use actix_web_actors::ws;
 use crate::websockets::chat_session::{ChatSession, RoomServer};
 use log::{error, info};
+use crate::models::presence::{UserPresence, GetRoomPresence};
 
 #[derive(Deserialize, ToSchema)]
 pub struct RoomInfo {
@@ -310,5 +311,46 @@ pub async fn join_room_ws(
     // Create a new chat session with the extracted user_id
     info!("Starting WebSocket session for user {} in room {}", user_id, room_id);
     let session = ChatSession::new(room_id, user_id, room_server.get_ref().clone());
+    // ws::start function starts the WebSocket session and thus the ChatSession actor
+    // This is where ChatSession::started would be called if implemented
     ws::start(session, &req, stream)
+    // When the WebSocket connection closes, actix will automatically call ChatSession::stopped
+    // if it is implemented, ending the actor’s lifecycle and cleaning up resources
+}
+
+#[utoipa::path(
+    get,
+    path = "/users/presence",
+    responses(
+        (status = 200, description = "Returns user presence statuses in the room", body = [UserPresence]),
+        (status = 404, description = "Room not found or no users present", body = ErrorResponse),
+        (status = 500, description = "Internal server error", body = ErrorResponse)
+    ),
+    params(
+        ("room_id" = i64, Path, description = "Room ID to retrieve presence info"),
+        ("Authorization" = String, Header, description = "Bearer <JWT Token>")
+    )
+)]
+pub async fn get_user_presence(
+    room_id: web::Path<i64>, // Directly use i64 instead of RoomId
+    room_server: web::Data<Addr<RoomServer>>,
+) -> Result<HttpResponse, actix_web::Error> {
+    // Send the GetRoomPresence message to the RoomServer actor to fetch presence data.
+    match room_server.send(GetRoomPresence { room_id: *room_id }).await {
+        Ok(presence) if !presence.is_empty() => {
+            Ok(HttpResponse::Ok().json(presence)) // Return the list of users' presence statuses
+        }
+        Ok(_) => {
+            // Return a 404 response if the room was found, but no users are present
+            Ok(HttpResponse::NotFound().json(ErrorResponse {
+                error: "No users found in the specified room.".to_string(),
+            }))
+        }
+        Err(_) => {
+            // Return a 500 response if there was an error in processing the request
+            Ok(HttpResponse::InternalServerError().json(ErrorResponse {
+                error: "Failed to retrieve user presence information.".to_string(),
+            }))
+        }
+    }
 }

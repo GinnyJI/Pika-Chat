@@ -17,6 +17,7 @@ src/
 │   ├── response.rs                      # Structs for standardized response
 │   ├── user.rs                          # Model definition for user-related data
 │   ├── room.rs                          # Model for chat room data
+│   ├── presence.rs                      # Define presence messages, e.g., SetUserOnline, SetUserOffline
 │   └── user_room.rs                     # Model for user-room relationships
 ├── routes/                              # Handlers for different application routes
 │   ├── auth.rs                          # Route handlers for authentication (e.g., register, login)
@@ -91,17 +92,7 @@ src/
 
 ## Accessing Swagger API Documentation
 
-The project uses Swagger UI for interactive API documentation. Follow the steps below to access it:
-
-1. **Start the Server**:
-
-   - Run the following command to start the server:
-
-     ```bash
-     cargo run
-     ```
-
-2. **Open Swagger UI**:
+1. **Open Swagger UI**:
 
    - Once the server is running, open a browser and navigate to:
 
@@ -111,12 +102,12 @@ The project uses Swagger UI for interactive API documentation. Follow the steps 
 
    - The Swagger UI provides a user-friendly interface to explore and interact with all documented endpoints, including Authentication, Test, and Chat Room Management APIs.
 
-3. **Using the Swagger Interface**:
+2. **Using the Swagger Interface**:
 
    - Expand each endpoint to view details about parameters, request body structure, responses, and authentication requirements.
    - You can test each API directly in Swagger by entering parameters, headers (e.g., JWT tokens), and request bodies, and clicking **Execute**.
 
-4. **Download OpenAPI JSON Specification**:
+3. **Download OpenAPI JSON Specification**:
 
    - You can also view or download the raw OpenAPI JSON specification from:
 
@@ -124,9 +115,46 @@ The project uses Swagger UI for interactive API documentation. Follow the steps 
      http://127.0.0.1:8080/api-doc/openapi.json
      ```
 
+---
+
 ## Steps to Test APIs
 
+**Note**: You can use [Swagger UI](http://127.0.0.1:8080/swagger-ui/) for a visual interface to send API requests and explore endpoints. The instructions below are for testing APIs using `curl` from the command line.
+
+### Common Setup: Register and Obtain JWT Token for Authentication
+
+For protected endpoints, you’ll need a registered user and a JWT token obtained via login. Follow these steps to register and obtain the token:
+
+1. **Register a User**:
+   - Send a `POST` request to register a new user with the username and password.
+
+   ```bash
+   curl -X POST http://127.0.0.1:8080/api/register \
+        -H "Content-Type: application/json" \
+        -d '{"username": "testuser1", "password": "password123"}'
+   ```
+
+   Replace `"testuser1"` and `"password123"` with your preferred credentials. This should return a `201 Created` response, indicating the user was created successfully.
+
+2. **Login to Obtain a JWT Token**:
+   - Use the registered username and password to log in, then store the token in a variable for easy reuse:
+
+   ```bash
+   TOKEN=$(curl -X POST http://127.0.0.1:8080/api/login \
+        -H "Content-Type: application/json" \
+        -d '{"username": "testuser2", "password": "password123"}' | sed -n 's/.*"token":"\([^"]*\)".*/\1/p')
+   ```
+
+   This command will log in and extract the token, storing it in the `$TOKEN` variable for reuse in further requests.
+
+---
+
+Now that you have a registered user and an authentication token, proceed to test each endpoint as needed. Use `$TOKEN` in requests requiring authentication. 
+
+### Steps to Test the Auth Endpoints
+
 1. **Clean Up the Database**:
+
    - Open the SQLite CLI and connect to your database file:
 
      ```bash
@@ -204,6 +232,7 @@ The project uses Swagger UI for interactive API documentation. Follow the steps 
 ### Steps to Test the Middleware
 
 1. **Test with a Valid Token**:
+
    - Use `curl` to send a request with a valid token to a protected route:
 
      ```bash
@@ -284,9 +313,9 @@ The project uses Swagger UI for interactive API documentation. Follow the steps 
    ```
 
    - **Expected Result**:
-     
+
      You should receive a `200 OK` response with a JSON array of available rooms:
-     
+
      ```json
      {
        "req_user_id": <your_user_id>,
@@ -312,15 +341,15 @@ The project uses Swagger UI for interactive API documentation. Follow the steps 
      ```
 
    - **Expected Result**:
-     
+
      - On success, you should receive a `200 OK` response confirming that the user has joined the room:
-     
+
        ```json
        {
          "message": "User added to the room successfully"
        }
        ```
-     
+
      - If the specified `room_id` does not exist, you should receive a `404 Not Found` response.
 
 5. **Test the Retrieve Room Members Endpoint (`GET /api/rooms/{room_id}/members`)**:
@@ -330,14 +359,14 @@ The project uses Swagger UI for interactive API documentation. Follow the steps 
    - **Precondition**: Use a valid JWT token and provide a valid `room_id`.
 
      ```bash
-     curl -X GET http://127.0.0.1:8080/api/rooms/2/members \
+     curl -X GET http://127.0.0.1:8080/api/rooms/1/members \
           -H "Authorization: Bearer $TOKEN"
      ```
 
    - **Expected Result**:
-     
+
      On success, you should receive a `200 OK` response with a JSON array of members in the specified room:
-     
+
      ```json
      [
        {
@@ -350,7 +379,7 @@ The project uses Swagger UI for interactive API documentation. Follow the steps 
        }
      ]
      ```
-     
+
      If the `room_id` does not exist, you should receive a `404 Not Found` response.
 
 6. **Verify User-Room Relationship in the Database**:
@@ -368,20 +397,10 @@ The project uses Swagger UI for interactive API documentation. Follow the steps 
 
 ### Steps to Test WebSocket Chat Functionality
 
-#### Step 1: Obtain JWT Token
-
-Use the following `curl` command to log in and obtain a JWT token. This token will be used for authenticating both the REST API requests and the WebSocket connection.
-
-```bash
-TOKEN=$(curl -X POST http://127.0.0.1:8080/api/login \
-     -H "Content-Type: application/json" \
-     -d '{"username": "testuser1", "password": "password123"}' | sed -n 's/.*"token":"\([^"]*\)".*/\1/p')
-```
-
-#### Step 2: Create a Chat Room
+#### Step 1: Create a Chat Room
 
 1. **Add a Room**:
-   
+
    Use the following `curl` command to create a new chat room. This room will be identified by a unique room ID.
 
    ```bash
@@ -392,7 +411,7 @@ TOKEN=$(curl -X POST http://127.0.0.1:8080/api/login \
    ```
 
 2. **View Room Info (to Get Room ID)**:
-   
+
    Run this command to list all rooms and get the room ID for the newly created room.
 
    ```bash
@@ -402,7 +421,7 @@ TOKEN=$(curl -X POST http://127.0.0.1:8080/api/login \
 
    The response will include the room ID, which will be needed for the next steps.
 
-#### Step 3: Add User to the Room
+#### Step 2: Add User to the Room
 
 To allow a user to join a room via WebSocket, they must first be added as a member of that room. Use the room ID from the previous step.
 
@@ -413,7 +432,7 @@ curl -X POST http://127.0.0.1:8080/api/rooms/<room_id>/members \
 
 Replace `<room_id>` with the actual room ID obtained in Step 2.
 
-#### Step 4: Connect to the Chat Room Using Websocat
+#### Step 3: Connect to the Chat Room Using Websocat
 
 1. **Install Websocat** (if not installed):
 
@@ -431,7 +450,7 @@ Replace `<room_id>` with the actual room ID obtained in Step 2.
 
    Replace `<room_id>` with the room ID from Step 2.
 
-#### Step 5: Send and Receive Messages
+#### Step 4: Send and Receive Messages
 
 1. **Send a Message**:
 
@@ -486,7 +505,7 @@ Replace `<room_id>` with the actual room ID obtained in Step 2.
      User 2: Hi User 1, this is User 2!
      ```
 
-#### Step 6: User Join/Leave Notifications
+#### Step 5: User Join/Leave Notifications
 
 1. **Join Notifications**:
 
@@ -496,7 +515,34 @@ Replace `<room_id>` with the actual room ID obtained in Step 2.
 
    When a `websocat` session disconnects (e.g., by pressing `Ctrl+C`), remaining users should see a message like `"User <ID> has left the room."`
 
+#### Step 6: Verify User Presence
 
+1. **Get User Presence in the Room**:
 
+   Use the following command to retrieve the presence status of all users in a specific room. Replace `<room_id>` with the actual room ID obtained in Step 1.
 
+   ```bash
+   curl -X GET "http://127.0.0.1:8080/api/users/presence/<room_id>" \
+        -H "Authorization: Bearer $TOKEN"
+   ```
 
+   The response will include a list of users in the room along with their presence status (`is_online: true` or `is_online: false`).
+
+   **Example Response**:
+
+   ```json
+   [
+     {"user_id": 1, "is_online": true},
+     {"user_id": 2, "is_online": false}
+   ]
+   ```
+
+   This output indicates that User 1 is currently online, while User 2 has disconnected.
+
+2. **Test Real-Time Updates of Presence Status**:
+
+   - **Step 1**: Connect multiple users to the room following **Step 3**.
+   - **Step 2**: Run the presence check command above after each user joins to confirm they appear with `is_online: true`.
+   - **Step 3**: Disconnect a user (e.g., by closing their `websocat` session) and run the command again to confirm their status changes to `is_online: false`.
+
+   This step will validate that the server correctly tracks and updates presence information in real time as users join or leave.
