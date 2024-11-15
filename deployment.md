@@ -65,7 +65,7 @@ Using Multipass allows for a consistent Linux environment to build and deploy yo
    - Clone the repository to your VM or transfer your project files:
 
      ```bash
-     git clone https://github.com/HesterG/rust-chat-app.git
+     git clone https://github.com/HesterG/rust-chatroom-server.git
      cd rust-chatroom-server
      ```
 
@@ -157,11 +157,11 @@ Using Multipass allows for a consistent Linux environment to build and deploy yo
      [[services]]
        internal_port = 80
        protocol = "tcp"
-
+     
        [[services.ports]]
          handlers = ["http"]
          port = 80
-
+     
        [[services.ports]]
          handlers = ["tls", "http"]
          port = 443

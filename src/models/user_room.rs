@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 
+// TODO: Check if necessary
 #[derive(Serialize, Deserialize, Debug)]
 pub struct UserRoom {
     pub user_id: i32,

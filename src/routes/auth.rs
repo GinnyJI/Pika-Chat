@@ -10,6 +10,7 @@ use crate::config::state::TOKEN_BLACKLIST;
 use utoipa::ToSchema;
 use crate::models::response::{MessageResponse, ErrorResponse, TokenResponse};
 
+// TODO check user model and replace RegisterData and LoginData with User model
 #[derive(Deserialize, ToSchema)]
 pub struct RegisterData {
     username: String,

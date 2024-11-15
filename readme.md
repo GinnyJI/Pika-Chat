@@ -217,14 +217,14 @@ Now that you have a registered user and an authentication token, proceed to test
 5. **Test the Logout Endpoint**:
 
    - Use the token obtained from the login response to send a `POST` request to `http://127.0.0.1:8080/api/logout`.
+   
    - With `curl`, run:
-
+   
      ```bash
      curl -X POST http://127.0.0.1:8080/api/logout \
           -H "Authorization: Bearer $TOKEN"
      ```
-
-   - Replace `<your_token_here>` with the actual token received from the login response.
+   
    - Check that you receive a `200 OK` response with a message indicating a successful logout.
 
 ---
@@ -239,9 +239,8 @@ Now that you have a registered user and an authentication token, proceed to test
      curl -H "Authorization: Bearer $TOKEN" http://127.0.0.1:8080/api/test-protected
      ```
 
-   - Replace `<your_valid_token>` with a JWT that is accepted by your application.
    - **Expected Result**: You should receive a `200 OK` response with the message from the protected route.
-
+   
 2. **Test with an Invalid Token**:
 
    - Use `curl` to send a request with an invalid token:
@@ -305,12 +304,13 @@ Now that you have a registered user and an authentication token, proceed to test
 3. **Test the Retrieve Rooms Endpoint (`GET /api/rooms`)**:
 
    - **Description**: Retrieve a list of all available chat rooms.
+
    - **Precondition**: Use a valid JWT token.
 
-   ```bash
-   curl -X GET http://127.0.0.1:8080/api/rooms \
-        -H "Authorization: Bearer $TOKEN"
-   ```
+     ```bash
+     curl -X GET http://127.0.0.1:8080/api/rooms \
+          -H "Authorization: Bearer $TOKEN"
+     ```
 
    - **Expected Result**:
 
@@ -342,15 +342,15 @@ Now that you have a registered user and an authentication token, proceed to test
 
    - **Expected Result**:
 
-     - On success, you should receive a `200 OK` response confirming that the user has joined the room:
+     On success, you should receive a `200 OK` response confirming that the user has joined the room:
 
-       ```json
-       {
-         "message": "User added to the room successfully"
-       }
-       ```
+     ```json
+     {
+       "message": "User added to the room successfully"
+     }
+     ```
 
-     - If the specified `room_id` does not exist, you should receive a `404 Not Found` response.
+     If the specified `room_id` does not exist, you should receive a `404 Not Found` response.
 
 5. **Test the Retrieve Room Members Endpoint (`GET /api/rooms/{room_id}/members`)**:
 
