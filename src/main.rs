@@ -58,13 +58,24 @@ async fn main() -> std::io::Result<()> {
 
     // Configure and run the Actix Web HTTP server
     HttpServer::new(move || {
+        // The closure passed to HttpServer::new is used to create a new instance of App
+        // for each thread in the server's thread pool. Each thread runs independently,
+        // and the App handles incoming HTTP requests assigned to that thread.
+
+        // The `move` keyword ensures that variables from the outer scope (like pool and room_server)
+        // are captured by value (ownership is transferred). This is essential because the closure
+        // will be executed on multiple threads, and variables captured by reference would
+        // lead to unsafe behavior or invalid references.
         App::new()
             // Register the database pool as application data, making it accessible to route handlers
+            // Register the database connection pool (pool) as application data.
+            // pool.clone() ensures that the same pool is safely shared across multiple threads.
             .app_data(web::Data::new(pool.clone()))
             .service(
                 SwaggerUi::new("/swagger-ui/{_:.*}")
                     .url("/api-doc/openapi.json", ApiDoc::openapi()),
             )
+            // Register the RoomServer actor, shared across threads for managing chat room sessions.
             .app_data(web::Data::new(room_server.clone()))
             .service(
                 web::resource("/ws/rooms/{room_id}")
@@ -114,7 +125,7 @@ async fn main() -> std::io::Result<()> {
     })
     // Bind the server to the address and port
     .bind(("127.0.0.1", 8080))?
-    // Run the server and await its completion
+    // Run the server, which will create a thread pool to handle incoming requests
     .run()
     .await
 }
