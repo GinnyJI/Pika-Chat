@@ -23,3 +23,4 @@ lazy_static = "1.4"
 utoipa = "5"
 utoipa-swagger-ui = { version = "8.0.3", features = ["actix-web"] }
 actix-web-actors = "4"  # WebSocket actor support
+actix-cors = "0.6"
