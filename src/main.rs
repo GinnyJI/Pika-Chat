@@ -6,7 +6,7 @@ mod websockets;
 
 use actix::Actor;
 use actix_cors::Cors;
-use actix_web::{http, web, App, HttpServer};
+use actix_web::{web, App, HttpServer};
 use sqlx::SqlitePool;
 use middleware::auth_middleware::AuthMiddleware;
 use routes::auth::{register_user, login_user, logout_user, RegisterData, LoginData};
@@ -73,9 +73,8 @@ async fn main() -> std::io::Result<()> {
             // pool.clone() ensures that the same pool is safely shared across multiple threads.
             .wrap(
                 Cors::default()
-                    .allowed_origin("http://127.0.0.1:3000") // Allow frontend origin
+                    .allow_any_origin() // Allow frontend origin
                     .allowed_methods(vec!["GET", "POST", "OPTIONS"]) // Allow specific methods
-                    .allowed_headers(vec![http::header::CONTENT_TYPE, http::header::AUTHORIZATION]) // Allow specific headers
                     .allow_any_header() // Allow any custom headers if required
                     .supports_credentials() // Support cookies and credentials
                     .max_age(3600), // Cache preflight response for 1 hour
