@@ -17,7 +17,7 @@ Visit [http://localhost:8080](http://localhost:8080) to start your chat journey!
 
 ---
 
-## Pikachu Reactions in the Chatroom
+## Pikachu Reactions in the Chatroom (TODO)
 
 - When a new user joins: ⚡✨ **"Pika Pi! Welcome to the chat!"**  
 - When someone sends a great message: 🎉⚡ **"Pikachuuu~!"**  
