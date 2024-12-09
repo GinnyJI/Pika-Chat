@@ -46,6 +46,7 @@ impl Component for Login {
                 let credentials = self.credentials.clone();
                 let link = ctx.link().clone();
 
+                // Spawn an async task to handle login.
                 wasm_bindgen_futures::spawn_local(async move {
                     match login(&credentials).await {
                         Ok(response) => link.send_message(Msg::LoginSuccess(response.token)),
@@ -55,8 +56,9 @@ impl Component for Login {
                 false
             }
             Msg::LoginSuccess(token) => {
-                // Save the token to local storage
-                LocalStorage::set("auth_token", token).expect("Failed to save token");
+                // Save the token to local storage using the same key as home.rs
+                LocalStorage::set("jwtToken", token).expect("Failed to save token");
+
                 // Redirect to the "dashboard" page
                 let navigator = ctx.link().navigator().unwrap();
                 navigator.push(&Route::Dashboard);
