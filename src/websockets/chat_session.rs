@@ -199,7 +199,7 @@ impl Actor for ChatSession {
         // Announce that the user has joined the room
         self.room_server.do_send(BroadcastMessage {
             room_id: self.room_id,
-            message: format!("User {} has joined the room.", self.user_id),
+            message: format!("⚡ Pika Pi! Welcome to the chat, User {}!", self.user_id),
         });
     }
 
@@ -213,7 +213,7 @@ impl Actor for ChatSession {
         // Announce that the user has left the room
         self.room_server.do_send(BroadcastMessage {
             room_id: self.room_id,
-            message: format!("User {} has left the room.", self.user_id),
+            message: format!("Pika-pika... Goodbye, User {}!", self.user_id),
         });
     }
 }
@@ -237,6 +237,14 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChatSession {
                 room_id: self.room_id,
                 message: format!("User {}: {}", self.user_id, text),
             });
+
+            // Celebrate a great message with Easter egg
+            if text.contains("great") || text.contains("awesome") || text.contains("amazing") {
+                self.room_server.do_send(BroadcastMessage {
+                    room_id: self.room_id,
+                    message: format!("⚡ Pikachuuu~! Great message from User {}!", self.user_id),
+                });
+            }
         }
     }
 }
