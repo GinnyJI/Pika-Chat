@@ -1,6 +1,8 @@
 use yew::prelude::*;
+use yew_router::prelude::*;
 use crate::components::form_input::FormInput;
 use crate::services::auth::{Credentials, register};
+use crate::routes::Route;
 
 pub struct Register {
     credentials: Credentials,
@@ -56,6 +58,9 @@ impl Component for Register {
             Msg::RegisterSuccess => {
                 self.success = true;
                 self.error = None;
+                // Redirect to the "login" page
+                let navigator = ctx.link().navigator().unwrap();
+                navigator.push(&Route::Login);
                 true
             }
             Msg::RegisterFailure(error) => {
