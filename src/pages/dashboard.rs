@@ -1,28 +1,53 @@
 use yew::prelude::*;
 use yew_router::prelude::*;
 use gloo::storage::{LocalStorage, Storage};
+use wasm_bindgen_futures::spawn_local;
 use crate::routes::Route;
 use crate::services::auth::logout;
-use wasm_bindgen_futures::spawn_local;
+use crate::services::room::{get_rooms, RoomsResponse};
+use crate::components::room_card::RoomCard;
 
 pub enum Msg {
     LogoutClicked,
     LogoutSuccess,
     LogoutFailure(String),
+    FetchRooms,
+    FetchRoomsSuccess(RoomsResponse),
+    FetchRoomsFailure(String),
 }
 
 pub struct Dashboard {
     token: Option<String>,
+    rooms: Option<RoomsResponse>,
+    error: Option<String>,
+    loading: bool,
 }
 
 impl Component for Dashboard {
     type Message = Msg;
     type Properties = ();
 
-    fn create(_ctx: &Context<Self>) -> Self {
-        // Check if token is present in LocalStorage
+    fn create(ctx: &Context<Self>) -> Self {
         let token = LocalStorage::get::<String>("jwtToken").ok();
-        Self { token }
+        let link = ctx.link().clone();
+
+        // Fetch rooms if token exists
+        if let Some(token) = token.clone() {
+            link.send_message(Msg::FetchRooms);
+            spawn_local(async move {
+                match get_rooms(&token).await {
+                    Ok(rooms) => link.send_message(Msg::FetchRoomsSuccess(rooms)),
+                    Err(err) => link.send_message(Msg::FetchRoomsFailure(err)),
+                }
+            });
+        }
+
+        Self {
+            token,
+            rooms: None,
+            error: None,
+            loading: true,
+        }
     }
 
     fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
@@ -31,35 +56,44 @@ impl Component for Dashboard {
         match msg {
             Msg::LogoutClicked => {
                 if let Some(token) = self.token.clone() {
-                    let link = ctx.link().clone(); // Clone the link outside the async block
+                    let link = ctx.link().clone();
                     spawn_local(async move {
-                        let result: Result<(), String> = logout(&token).await;
+                        let result = logout(&token).await;
                         match result {
-                            Ok(_) => {
-                                link.send_message(Msg::LogoutSuccess); // Use link, not ctx.link()
-                            }
-                            Err(e) => {
-                                link.send_message(Msg::LogoutFailure(e));
-                            }
+                            Ok(_) => link.send_message(Msg::LogoutSuccess),
+                            Err(err) => link.send_message(Msg::LogoutFailure(err)),
                         }
                     });
                 } else {
-                    // If no token is found, just navigate home
                     navigator.push(&Route::Home);
                 }
                 false
             }
             Msg::LogoutSuccess => {
-                // Remove the token from local storage
                 LocalStorage::delete("jwtToken");
                 navigator.push(&Route::Home);
                 true
             }
             Msg::LogoutFailure(_error) => {
-                // In case of failure, you might display an error or still navigate away
-                // For simplicity, we'll just remove the token and navigate home
                 LocalStorage::delete("jwtToken");
                 navigator.push(&Route::Home);
+                true
+            }
+            Msg::FetchRooms => {
+                self.loading = true;
+                self.error = None;
+                true
+            }
+            Msg::FetchRoomsSuccess(rooms) => {
+                self.loading = false;
+                self.rooms = Some(rooms);
+                self.error = None;
+                true
+            }
+            Msg::FetchRoomsFailure(err) => {
+                self.loading = false;
+                self.rooms = None;
+                self.error = Some(err);
                 true
             }
         }
@@ -77,7 +111,6 @@ impl Component for Dashboard {
                             <a href="/">{"Pika Chat"}</a>
                         </div>
                         <div style="display: flex; gap: 1rem;">
-                            // Instead of Register and Login, we show Logout
                             <a href="#" onclick={onclick_logout} style="color: #1f2937; text-decoration: none; font-weight: 500; transition: color 0.2s;">
                                 {"Logout"}
                             </a>
@@ -91,8 +124,25 @@ impl Component for Dashboard {
                         {"Dashboard"}
                     </h1>
                     <p style="font-size: 1.125rem; color: #4b5563; margin-bottom: 2rem; max-width: 600px;">
-                        {"Welcome to the Dashboard page! This is a demo."}
+                        {"Welcome to the Dashboard page! Below is the list of available rooms."}
                     </p>
+                    if self.loading {
+                        <p>{"Loading rooms..."}</p>
+                    } else if let Some(error) = &self.error {
+                        <p style="color: red;">{format!("Error: {}", error)}</p>
+                    } else if let Some(rooms) = &self.rooms {
+                        <div class="room-card-list">
+                            {
+                                for rooms.rooms.iter().map(|room| {
+                                    html! {
+                                        <RoomCard room={room.clone()} />
+                                    }
+                                })
+                            }
+                        </div>
+                    } else {
+                        <p>{"No rooms available."}</p>
+                    }
                 </main>
 
                 // Footer Section
