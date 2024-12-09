@@ -111,9 +111,21 @@ pub fn home() -> Html {
                     {"Connect with your friends, chat in real-time, and enjoy the best social experience online. Join now to explore!"}
                 </p>
                 <img src="static/pikachu.png" alt="Pikachu image" style="width: 10rem; height: 10rem; margin-bottom: 2rem;" />
-                <a href="/" style="background-color: #facc15; padding: 1rem 2rem; border-radius: 0.5rem; font-weight: 600; color: #1f2937; text-decoration: none; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); transition: transform 0.2s; hover: transform: scale(1.05);">
-                    {"Get Started"}
-                </a>
+                {
+                    if !(*username).is_empty() {
+                        html! {
+                            <a href="/dashboard" style="background-color: #facc15; padding: 1rem 2rem; border-radius: 0.5rem; font-weight: 600; color: #1f2937; text-decoration: none; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); transition: transform 0.2s; hover: transform: scale(1.05);">
+                                {"Go to Dashboard"}
+                            </a>
+                        }
+                    } else {
+                        html! {
+                            <a href="/login" style="background-color: #facc15; padding: 1rem 2rem; border-radius: 0.5rem; font-weight: 600; color: #1f2937; text-decoration: none; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); transition: transform 0.2s; hover: transform: scale(1.05);">
+                                {"Login First"}
+                            </a>
+                        }
+                    }
+                }
             </main>
 
             // Footer Section
