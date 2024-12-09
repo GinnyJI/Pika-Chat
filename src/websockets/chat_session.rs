@@ -239,7 +239,12 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChatSession {
             });
 
             // Celebrate a great message with Easter egg
-            if text.contains("great") || text.contains("awesome") || text.contains("amazing") {
+            let lower_text = text.to_lowercase();
+            if lower_text.contains("great") 
+                || lower_text.contains("awesome") 
+                || lower_text.contains("amazing") 
+                || lower_text.contains("ginny") 
+            {
                 self.room_server.do_send(BroadcastMessage {
                     room_id: self.room_id,
                     message: format!("⚡ Pikachuuu~! Great message from User {}!", self.user_id),
