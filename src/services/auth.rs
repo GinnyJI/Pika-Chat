@@ -5,11 +5,13 @@ use serde::{Deserialize, Serialize};
 pub struct Credentials {
     pub username: String,
     pub password: String,
+    pub avatar_url: Option<String>, // Optional field for avatar URL, only used by register
 }
 
 #[derive(Deserialize, Debug)]
 pub struct LoginResponse {
     pub token: String,
+    pub avatar_url: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -50,7 +52,10 @@ pub async fn register(credentials: &Credentials) -> Result<(), String> {
         if response.ok() {
             Ok(())
         } else {
-            Err("Username already exists.".to_string())
+            let err: ErrorResponse = response.json::<ErrorResponse>()
+                .await
+                .map_err(|_| "Invalid error response from server".to_string())?;
+            Err(err.error)
         }
     } else {
         Err("Failed to connect to the server.".to_string())

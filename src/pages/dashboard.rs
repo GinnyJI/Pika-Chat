@@ -6,7 +6,10 @@ use crate::routes::Route;
 use crate::services::auth::logout;
 use crate::services::room::{get_rooms, RoomsResponse, Room, RoomInfo, create_room, add_room_member};
 use crate::components::room_card::RoomCard;
+use crate::components::footer::Footer;
+use crate::components::header::Header;
 use web_sys::HtmlInputElement;
+use crate::services::utils::decode_username;
 
 pub enum Msg {
     LogoutClicked,
@@ -29,6 +32,8 @@ pub struct Dashboard {
     error: Option<String>,
     loading: bool,
     room_name_input: String,
+    username: String,
+    avatar_url: Option<String>, // Add avatar_url to state
 }
 
 impl Component for Dashboard {
@@ -38,7 +43,9 @@ impl Component for Dashboard {
     fn create(ctx: &Context<Self>) -> Self {
         let token = LocalStorage::get::<String>("jwtToken").ok();
         let link = ctx.link().clone();
-
+        let username = token.as_ref().and_then(|t| decode_username(t)).unwrap_or_default();
+        let avatar_url = LocalStorage::get::<String>("avatarUrl").ok(); // Retrieve avatar URL from local storage
+    
         // Fetch rooms if token exists
         if let Some(token) = token.clone() {
             link.send_message(Msg::FetchRooms);
@@ -49,15 +56,17 @@ impl Component for Dashboard {
                 }
             });
         }
-
+    
         Self {
             token,
             rooms: None,
             error: None,
             loading: true,
             room_name_input: String::new(),
+            username,
+            avatar_url, // Set the retrieved avatar_url
         }
-    }
+    }     
 
     fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
         let navigator = ctx.link().navigator().expect("No navigator available");
@@ -156,7 +165,6 @@ impl Component for Dashboard {
                 self.error = Some(format!("Failed to join the room: {}", err));
                 true
             }
-            _ => false,
         }
     }
 
@@ -172,14 +180,11 @@ impl Component for Dashboard {
 
         html! {
             <div class="full-height">
-                // Header Section
-                <header class="header">
-                    <nav class="nav">
-                        <a class="nav-logo" href="/">{"Pika Chat"}</a>
-                        <a href="#" onclick={onclick_logout} class="nav-link">{"Logout"}</a>
-                    </nav>
-                </header>
-
+                <Header 
+                    username={Some(self.username.clone())}
+                    avatar_url={self.avatar_url.clone()}
+                    on_logout={onclick_logout}
+                />
                 // Main Section
                 <main class="main">
                     <h1 class="heading">{"Dashboard"}</h1>
@@ -220,10 +225,8 @@ impl Component for Dashboard {
                     }
                 </main>
 
-                // Footer Section
-                <footer class="footer">
-                    <p class="footer-text">{"© 2024 Pika Chat. All rights reserved."}</p>
-                </footer>
+                <Footer />
+
             </div>
         }        
     }

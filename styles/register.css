@@ -31,3 +31,44 @@
     color: #16a34a;
     font-size: 0.875rem;
 }
+
+.avatar-selection {
+    margin-top: 1rem;
+}
+
+.avatar-options {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    margin-top: 0.5rem;
+}
+
+.avatar-option {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 2px solid transparent;
+    border-radius: 50%;
+    padding: 0.5rem;
+    cursor: pointer;
+    transition: transform 0.3s ease, border-color 0.3s ease;
+}
+
+.avatar-option img {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.avatar-option:hover {
+    transform: scale(1.1);
+    border-color: #007bff; /* Change to your desired hover color */
+}
+
+.avatar-option.selected {
+    border-color: #28a745; /* Change to your desired selected color */
+    transform: scale(1.15);
+}
