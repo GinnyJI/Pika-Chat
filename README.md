@@ -33,7 +33,12 @@ Visit [http://localhost:8080](http://localhost:8080) to start your chat journey!
 
 Now, let’s **spark** some fun and start chatting! ⚡💬
 
-## Front End Structure
+---
+
+## Front End Structure Overview
+
+Not really important... for anyone who is interested only
+
 ```bash
 src/
 ├── components/                          # Reusable UI components for the frontend
