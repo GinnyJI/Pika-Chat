@@ -32,3 +32,38 @@ Visit [http://localhost:8080](http://localhost:8080) to start your chat journey!
 ---
 
 Now, let’s **spark** some fun and start chatting! ⚡💬
+
+## Front End Structure
+```bash
+src/
+├── components/                          # Reusable UI components for the frontend
+│   ├── footer.rs                        # Footer component for the application layout
+│   ├── form_input.rs                    # Form input component for user inputs
+│   ├── header.rs                        # Header component for navigation and branding
+│   ├── room_card.rs                     # Component to display a chat room summary
+│   └── mod.rs                           # Module entry point for components
+├── pages/                               # Page-specific components for routing
+│   ├── dashboard.rs                     # Dashboard page for the logged-in user
+│   ├── home.rs                          # Home page of the application
+│   ├── login.rs                         # Login page for authentication
+│   ├── register.rs                      # Register page for user sign-up
+│   └── mod.rs                           # Module entry point for pages
+├── services/                            # API service handlers for interacting with the backend
+│   ├── auth.rs                          # Handles authentication API calls
+│   ├── room.rs                          # Handles API calls related to chat room management
+│   ├── utils.rs                         # Utility functions shared across services
+│   └── mod.rs                           # Module entry point for services
+├── static/                              # Static assets like images, fonts, and other media resources
+├── styles/                              # CSS files for the application's styles
+│   ├── base.css                         # Base styling for common elements
+│   ├── dashboard.css                    # Styles specific to the dashboard page
+│   ├── home.css                         # Styles for the home page
+│   ├── login.css                        # Styles for the login page
+│   ├── register.css                     # Styles for the register page
+│   ├── output.css                       # Generated Tailwind CSS output
+│   └── tailwind.css                     # Tailwind CSS customizations and imports
+├── app.rs                               # Main application entry point for rendering and routing
+├── routes.rs                            # Frontend routes configuration for navigation
+├── index.html                           # HTML entry point for the application
+
+```
