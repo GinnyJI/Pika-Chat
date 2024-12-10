@@ -13,5 +13,7 @@ pub struct ErrorResponse {
 
 #[derive(serde::Serialize, ToSchema)]
 pub struct TokenResponse {
-    pub token: String,
+    pub token: String,             // JWT token
+    pub username: String,          // Username of the logged-in user
+    pub avatar_url: Option<String>, // Optional avatar URL of the user
 }

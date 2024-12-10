@@ -14,6 +14,7 @@ use crate::models::response::{MessageResponse, ErrorResponse, TokenResponse};
 pub struct AuthData {
     username: String,
     password: String,
+    avatar_url: Option<String>,  // Optional avatar URL field
 }
 
 #[utoipa::path(
@@ -31,10 +32,15 @@ async fn register_user(
     user_data: web::Json<AuthData>,
 ) -> HttpResponse {
     let hashed_password = hash(&user_data.password, DEFAULT_COST).unwrap();
+
+    // Optional avatar_url handling
+    let avatar_url = user_data.avatar_url.clone().unwrap_or_else(|| "".to_string());
+
     let result = sqlx::query!(
-        "INSERT INTO users (username, password_hash) VALUES (?, ?)",
+        "INSERT INTO users (username, password_hash, avatar_url) VALUES (?, ?, ?)",
         user_data.username,
-        hashed_password
+        hashed_password,
+        avatar_url
     )
     .execute(pool.get_ref())
     .await;
@@ -61,7 +67,6 @@ async fn register_user(
         (status = 401, description = "Unauthorized: User ID missing in token", body = ErrorResponse)
     )
 )]
-
 #[post("/login")]
 async fn login_user(
     pool: web::Data<SqlitePool>,
@@ -69,7 +74,7 @@ async fn login_user(
 ) -> HttpResponse {
     // Fetch user from the database based on the provided username
     let user = sqlx::query!(
-        "SELECT user_id, username, password_hash, created_at FROM users WHERE username = ?",
+        "SELECT user_id, username, password_hash, avatar_url, created_at FROM users WHERE username = ?",
         login_data.username
     )
     .fetch_optional(pool.get_ref())
@@ -86,10 +91,10 @@ async fn login_user(
                 .timestamp() as usize;
 
             let claims = Claims {
-                sub: user.user_id.expect("User ID should not be None").to_string(),  // Use user_id for sub
-                username: user.username.clone(),  // Added username to claims
-                iat: now,  // Issued at time
-                exp: expiration,  // Expiration time
+                sub: user.user_id.expect("User ID should not be None").to_string(), // Use user_id for sub
+                username: user.username.clone(), // Added username to claims
+                iat: now, // Issued at time
+                exp: expiration, // Expiration time
             };
 
             let token = encode(
@@ -98,8 +103,17 @@ async fn login_user(
                 &EncodingKey::from_secret("secret_key_for_jwt".as_ref()),
             ).unwrap();
 
-            info!("User '{}' logged in successfully.", user.username);
-            return HttpResponse::Ok().json(TokenResponse { token });
+            info!(
+                "User '{}' logged in successfully. Avatar URL: {:?}",
+                user.username, user.avatar_url
+            );
+
+            // Include avatar_url in the response
+            return HttpResponse::Ok().json(TokenResponse {
+                token,
+                username: user.username,
+                avatar_url: user.avatar_url,
+            });
         } else {
             info!("User '{}' failed to log in due to incorrect password.", login_data.username);
             return HttpResponse::Unauthorized().json(ErrorResponse { error: "Unauthorized: Invalid username or password".into() });

@@ -31,6 +31,7 @@ pub struct RoomsResponse {
 pub struct RoomMember {
     pub user_id: i64,
     pub username: String,
+    pub avatar_url: Option<String>, // Include avatar URL
 }
 
 #[utoipa::path(
@@ -155,10 +156,10 @@ pub async fn get_room_members(
         return HttpResponse::NotFound().json(ErrorResponse { error: "Room not found".into() });
     }
 
-    // Fetch members of the room
+    // Fetch members of the room with avatar_url
     match sqlx::query_as!(
         RoomMember,
-        "SELECT u.user_id, u.username FROM users u \
+        "SELECT u.user_id, u.username, u.avatar_url FROM users u \
         INNER JOIN user_rooms ur ON u.user_id = ur.user_id \
         WHERE ur.room_id = ?",
         room_id
@@ -167,8 +168,10 @@ pub async fn get_room_members(
     .await
     {
         Ok(members) => HttpResponse::Ok().json(members),
-        // A failure to retrieve rooms typically indicates a server-side problem, such as a database connectivity issue.
-        Err(_) => HttpResponse::InternalServerError().json(ErrorResponse { error: "Failed to retrieve room members".into() }),
+        Err(e) => {
+            error!("Failed to retrieve room members: {}", e);
+            HttpResponse::InternalServerError().json(ErrorResponse { error: "Failed to retrieve room members".into() })
+        }
     }
 }
 
