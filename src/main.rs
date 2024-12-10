@@ -9,7 +9,7 @@ use actix_cors::Cors;
 use actix_web::{web, App, HttpServer};
 use sqlx::SqlitePool;
 use middleware::auth_middleware::AuthMiddleware;
-use routes::auth::{register_user, login_user, logout_user, RegisterData, LoginData};
+use routes::auth::{register_user, login_user, logout_user, AuthData};
 use routes::room::{create_room, add_room_member, get_rooms, get_room_members, join_room_ws, get_user_presence, RoomMember, Room, RoomInfo, RoomsResponse};
 use routes::test_routes::test_protected_route;
 use models::response::{MessageResponse, ErrorResponse, TokenResponse};
@@ -33,7 +33,7 @@ use websockets::chat_session::RoomServer;
         crate::routes::room::get_user_presence
     ),
     // Define all the schemas (data structures) that will be used in the API documentation.
-    components(schemas(RoomMember, Room, RoomInfo, RoomsResponse, RegisterData, LoginData, MessageResponse, TokenResponse, ErrorResponse))
+    components(schemas(RoomMember, Room, RoomInfo, RoomsResponse, AuthData, MessageResponse, TokenResponse, ErrorResponse))
 )]
 // Empty struct ApiDoc serves as the root for the OpenAPI spec.
 // #[openapi(...)] generates a full OpenAPI spec, including all paths and schemas.

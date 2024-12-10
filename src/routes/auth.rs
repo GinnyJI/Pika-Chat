@@ -10,15 +10,8 @@ use crate::config::state::TOKEN_BLACKLIST;
 use utoipa::ToSchema;
 use crate::models::response::{MessageResponse, ErrorResponse, TokenResponse};
 
-// TODO check user model and replace RegisterData and LoginData with User model
 #[derive(Deserialize, ToSchema)]
-pub struct RegisterData {
-    username: String,
-    password: String,
-}
-
-#[derive(Deserialize, ToSchema)]
-pub struct LoginData {
+pub struct AuthData {
     username: String,
     password: String,
 }
@@ -26,7 +19,7 @@ pub struct LoginData {
 #[utoipa::path(
     post,
     path = "/api/register",
-    request_body = RegisterData,
+    request_body = AuthData,
     responses(
         (status = 201, description = "User created successfully", body = MessageResponse),
         (status = 400, description = "User could not be created", body = ErrorResponse)
@@ -35,10 +28,9 @@ pub struct LoginData {
 #[post("/register")]
 async fn register_user(
     pool: web::Data<SqlitePool>,
-    user_data: web::Json<RegisterData>,
+    user_data: web::Json<AuthData>,
 ) -> HttpResponse {
     let hashed_password = hash(&user_data.password, DEFAULT_COST).unwrap();
-
     let result = sqlx::query!(
         "INSERT INTO users (username, password_hash) VALUES (?, ?)",
         user_data.username,
@@ -62,17 +54,18 @@ async fn register_user(
 #[utoipa::path(
     post,
     path = "/api/login",
-    request_body = LoginData,
+    request_body = AuthData,
     responses(
         (status = 200, description = "User logged in successfully", body = TokenResponse),
         (status = 401, description = "Unauthorized: Invalid username or password or User ID missing in token", body = ErrorResponse),
         (status = 401, description = "Unauthorized: User ID missing in token", body = ErrorResponse)
     )
 )]
+
 #[post("/login")]
 async fn login_user(
     pool: web::Data<SqlitePool>,
-    login_data: web::Json<LoginData>,
+    login_data: web::Json<AuthData>,
 ) -> HttpResponse {
     // Fetch user from the database based on the provided username
     let user = sqlx::query!(
