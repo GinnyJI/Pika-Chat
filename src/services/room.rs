@@ -14,7 +14,6 @@ pub struct Room {
     pub user_id: i64,
 }
 
-
 #[derive(Deserialize, Debug)]
 #[allow(dead_code)]
 pub struct RoomsResponse {
