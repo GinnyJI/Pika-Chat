@@ -4,7 +4,7 @@ use gloo::storage::{LocalStorage, Storage};
 use wasm_bindgen_futures::spawn_local;
 use crate::routes::Route;
 use crate::services::auth::logout;
-use crate::services::room::{get_rooms, RoomsResponse, Room, RoomInfo, create_room};
+use crate::services::room::{get_rooms, RoomsResponse, Room, RoomInfo, create_room, add_room_member};
 use crate::components::room_card::RoomCard;
 use web_sys::HtmlInputElement;
 
@@ -19,6 +19,8 @@ pub enum Msg {
     CreateRoom,
     CreateRoomSuccess(Room),
     CreateRoomFailure(String),
+    AddMemberToRoomSuccess,
+    AddMemberToRoomFailure(String),
 }
 
 pub struct Dashboard {
@@ -124,15 +126,37 @@ impl Component for Dashboard {
             }
             Msg::CreateRoomSuccess(room) => {
                 if let Some(ref mut rooms) = self.rooms {
-                    rooms.rooms.push(room);
+                    rooms.rooms.push(room.clone());
                 }
                 self.room_name_input.clear(); // Clear input on success
+            
+                // Add the current user as a member of the newly created room
+                if let Some(token) = self.token.clone() {
+                    let link = ctx.link().clone();
+                    let room_id = room.room_id;
+                    spawn_local(async move {
+                        match add_room_member(&token, room_id).await {
+                            Ok(_) => link.send_message(Msg::AddMemberToRoomSuccess),
+                            Err(err) => link.send_message(Msg::AddMemberToRoomFailure(err)),
+                        }
+                    });
+                }
                 true
             }
             Msg::CreateRoomFailure(err) => {
                 self.error = Some(err);
                 true
             }
+            Msg::AddMemberToRoomSuccess => {
+                // Handle success (e.g., update UI or log success)
+                true
+            }
+            Msg::AddMemberToRoomFailure(err) => {
+                // Handle failure (e.g., display an error message)
+                self.error = Some(format!("Failed to join the room: {}", err));
+                true
+            }
+            _ => false,
         }
     }
 
@@ -155,7 +179,7 @@ impl Component for Dashboard {
                         <a href="#" onclick={onclick_logout} class="nav-link">{"Logout"}</a>
                     </nav>
                 </header>
-        
+
                 // Main Section
                 <main class="main">
                     <h1 class="heading">{"Dashboard"}</h1>
@@ -195,7 +219,7 @@ impl Component for Dashboard {
                         <p>{"No rooms available."}</p>
                     }
                 </main>
-        
+
                 // Footer Section
                 <footer class="footer">
                     <p class="footer-text">{"© 2024 Pika Chat. All rights reserved."}</p>

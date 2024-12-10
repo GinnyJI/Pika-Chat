@@ -74,7 +74,7 @@ pub fn home() -> Html {
             <header class="header">
                 <nav class="nav">
                     <a href="/" class="nav-logo">{"Pika Chat"}</a>
-                    <div style="display: flex; gap: 1rem;">
+                    <div class="nav-links">
                         {
                             if !(*username).is_empty() {
                                 html! {
