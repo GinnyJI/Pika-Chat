@@ -12,8 +12,8 @@ pub struct FormInputProps {
 #[function_component(FormInput)]
 pub fn form_input(props: &FormInputProps) -> Html {
     html! {
-        <div>
-            <label class="block text-sm font-medium text-gray-700">{ &props.label }</label>
+        <div class="login-field">
+            <label class="text-sm font-medium text-gray-700">{ &props.label }</label>
             <input
                 type={props.input_type.clone()}
                 placeholder={props.placeholder.clone()}

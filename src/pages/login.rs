@@ -73,32 +73,24 @@ impl Component for Login {
 
     fn view(&self, ctx: &Context<Self>) -> Html {
         html! {
-            <div style="min-height: 100vh; display: flex; flex-direction: column; background-color: #f9fafb;">
+            <div class="full-height">
                 // Header Section
-                <header style="background-color: #facc15; padding: 1rem; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); position: static; width: 100%;">
-                    <nav style="max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center;">
-                        <div style="font-size: 1.5rem; font-weight: bold; color: #1f2937;">
-                            <a href="/">{"Pika Chat"}</a>
-                        </div>
-                        <div style="display: flex; gap: 1rem;">
-                            <a href="/register" style="color: #1f2937; text-decoration: none; font-weight: 500; transition: color 0.2s; hover: color: #4b5563;">
-                                {"Register"}
-                            </a>
-                            <a href="/login" style="color: #1f2937; text-decoration: none; font-weight: 500; transition: color 0.2s; hover: color: #4b5563;">
-                                {"Login"}
-                            </a>
+                <header class="header">
+                    <nav class="nav">
+                        <a href="/" class="nav-logo">{"Pika Chat"}</a>
+                        <div class="nav-links">
+                            <a href="/register" class="nav-link">{"Register"}</a>
+                            <a href="/login" class="nav-link">{"Login"}</a>
                         </div>
                     </nav>
                 </header>
 
                 // Main Section
-                <main style="flex: 1; padding: 2rem; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                    <div style="max-width: 400px; width: 100%; background-color: #ffffff; border-radius: 0.5rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); padding: 2rem;">
-                        <h1 style="font-size: 1.5rem; font-weight: bold; color: #1f2937; text-align: center;">
-                            {"Login"}
-                        </h1>
+                <main class="main">
+                    <div class="login-card">
+                        <h1 class="login-heading">{"Login"}</h1>
                         <form
-                            style="margin-top: 1.5rem; display: flex; flex-direction: column; gap: 1rem;"
+                            class="login-form"
                             onsubmit={ctx.link().callback(|e: SubmitEvent| {
                                 e.prevent_default();
                                 Msg::Submit
@@ -119,17 +111,14 @@ impl Component for Login {
                                 oninput={ctx.link().callback(Msg::UpdatePassword)}
                             />
                             if let Some(error) = &self.error {
-                                <p style="color: #dc2626; font-size: 0.875rem;">{ error.clone() }</p>
+                                <p class="error-message">{ error.clone() }</p>
                             }
-                            <button
-                                type="submit"
-                                style="padding: 0.75rem; background-color: #4f46e5; color: #ffffff; border-radius: 0.375rem; text-align: center; font-weight: bold; transition: background-color 0.2s; hover: background-color: #4338ca;"
-                            >
+                            <button type="submit" class="button-primary">
                                 { "Login" }
                             </button>
                         </form>
-                        <p style="margin-top: 1rem; text-align: center; font-size: 0.875rem; color: #4b5563;">
-                            <a href="/register" style="color: #4f46e5; text-decoration: none; hover: text-decoration: underline;">
+                        <p class="register-link">
+                            <a href="/register" class="link">
                                 { "Don't have an account? Register" }
                             </a>
                         </p>
@@ -137,8 +126,8 @@ impl Component for Login {
                 </main>
 
                 // Footer Section
-                <footer style="background-color: #1f2937; color: #e5e7eb; text-align: center; padding: 1rem; width: 100%;">
-                    <p style="font-size: 0.875rem;">
+                <footer class="footer">
+                    <p class="footer-text">
                         {"© 2024 Pika Chat. All rights reserved."}
                     </p>
                 </footer>
