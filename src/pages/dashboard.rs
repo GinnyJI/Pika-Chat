@@ -215,7 +215,10 @@ impl Component for Dashboard {
                             {
                                 for rooms.rooms.iter().map(|room| {
                                     html! {
-                                        <RoomCard room={room.clone()} />
+                                        // Use Link to pass the `room_id` dynamically
+                                        <Link<Route> to={Route::ChatRoom { room_id: room.room_id }}>
+                                            <RoomCard room={room.clone()} />
+                                        </Link<Route>>
                                     }
                                 })
                             }
