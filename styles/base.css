@@ -30,6 +30,7 @@
 
 .nav-links {
     display: flex;
+    align-items: center; /* Ensure items align vertically */
     gap: 1rem;
 }
 
@@ -42,6 +43,20 @@
 
 .nav-link:hover {
     color: #a36135;
+}
+
+/* Avatar Styling */
+.nav-avatar {
+    width: 32px; /* Set a fixed size for the avatar */
+    height: 32px;
+    border-radius: 50%; /* Make the avatar circular */
+    border: 2px solid #3f3025; /* Optional border for better visibility */
+    object-fit: cover; /* Ensure the image scales well */
+}
+
+/* Ensure spacing between avatar and username */
+.nav-avatar + span {
+    margin-left: 0.5rem;
 }
 
 .main {
