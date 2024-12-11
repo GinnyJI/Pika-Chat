@@ -21,6 +21,7 @@ impl Message for BroadcastMessage {
 pub struct AddUser {
     pub room_id: RoomId,
     pub user_id: UserId,
+    pub username: String,
     pub addr: Addr<ChatSession>,
 }
 
@@ -43,6 +44,7 @@ pub struct RoomServer {
     rooms: HashMap<RoomId, HashSet<UserId>>,               // Tracks user IDs in each room
     user_sessions: HashMap<UserId, Addr<ChatSession>>,      // Tracks active sessions by user ID
     user_presence: HashMap<UserId, bool>,                   // Tracks online/offline status of each user
+    user_names: HashMap<UserId, String>,                   // Maps user IDs to usernames
 }
 
 impl RoomServer {
@@ -52,6 +54,7 @@ impl RoomServer {
             rooms: HashMap::new(),
             user_sessions: HashMap::new(),
             user_presence: HashMap::new(),
+            user_names: HashMap::new(),
         }
     }
 
@@ -79,7 +82,11 @@ impl RoomServer {
         if let Some(user_ids) = self.rooms.get(&room_id) {
             for &user_id in user_ids {
                 if let Some(addr) = self.user_sessions.get(&user_id) {
-                    addr.do_send(ChatMessage { message: message.to_string() });
+                    if let Some(username) = self.user_names.get(&user_id) {
+                        addr.do_send(ChatMessage {
+                            message: format!("{}: {}", username, message),
+                        });
+                    }
                 }
             }
         }
@@ -137,9 +144,10 @@ impl Handler<AddUser> for RoomServer {
     type Result = ();
 
     fn handle(&mut self, msg: AddUser, _: &mut Self::Context) {
-        self.add_user(msg.room_id, msg.user_id, msg.addr);
-        self.set_user_online(msg.user_id); // Set user as online when added
-        println!("User {} added to room {}", msg.user_id, msg.room_id);
+        self.add_user(msg.room_id, msg.user_id, msg.addr.clone());
+        self.user_names.insert(msg.user_id, msg.username.clone());
+        self.set_user_online(msg.user_id);
+        println!("User {} ({}) added to room {}", msg.user_id, msg.username, msg.room_id);
     }
 }
 
@@ -176,12 +184,13 @@ impl Message for ChatMessage {
 pub struct ChatSession {
     pub room_id: RoomId,
     pub user_id: UserId,
+    pub username: String,
     pub room_server: Addr<RoomServer>,
 }
 
 impl ChatSession {
-    pub fn new(room_id: RoomId, user_id: UserId, room_server: Addr<RoomServer>) -> Self {
-        ChatSession { room_id, user_id, room_server }
+    pub fn new(room_id: RoomId, user_id: UserId, username: String, room_server: Addr<RoomServer>) -> Self {
+        ChatSession { room_id, user_id, username, room_server }
     }
 }
 
@@ -193,13 +202,14 @@ impl Actor for ChatSession {
         self.room_server.do_send(AddUser {
             room_id: self.room_id,
             user_id: self.user_id,
+            username: self.username.clone(),
             addr: ctx.address(),
         });
 
         // Announce that the user has joined the room
         self.room_server.do_send(BroadcastMessage {
             room_id: self.room_id,
-            message: format!("⚡ Pika Pi! Welcome to the chat, User {}!", self.user_id),
+            message: format!("⚡ Pika Pi! Welcome to the chat, {}!", self.username),
         });
     }
 
@@ -213,7 +223,7 @@ impl Actor for ChatSession {
         // Announce that the user has left the room
         self.room_server.do_send(BroadcastMessage {
             room_id: self.room_id,
-            message: format!("Pika-pika... Goodbye, User {}!", self.user_id),
+            message: format!("Pika-pika... Goodbye, {}!", self.username),
         });
     }
 }
@@ -235,7 +245,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChatSession {
             // Send the received message to the RoomServer for broadcasting
             self.room_server.do_send(BroadcastMessage {
                 room_id: self.room_id,
-                message: format!("User {}: {}", self.user_id, text),
+                message: format!("{}", text),
             });
 
             // Celebrate a great message with Easter egg
@@ -247,7 +257,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChatSession {
             {
                 self.room_server.do_send(BroadcastMessage {
                     room_id: self.room_id,
-                    message: format!("⚡ Pikachuuu~! Great message from User {}!", self.user_id),
+                    message: format!("⚡ Pikachuuu~! Great message from {}!", self.username),
                 });
             }
         }

@@ -348,12 +348,28 @@ pub async fn join_room_ws(
         }));
     }
 
+    let username = match sqlx::query_scalar!(
+        "SELECT username FROM users WHERE user_id = ?",
+        user_id
+    )
+    .fetch_one(pool.get_ref())
+    .await
+    {
+        Ok(name) => name,
+        Err(e) => {
+            error!("Database error fetching username: {}", e);
+            return Ok(HttpResponse::InternalServerError().json(ErrorResponse {
+                error: "Database error".to_string(),
+            }));
+        }
+    };
+
     // Start WebSocket session
     info!(
-        "Starting WebSocket session for user {} in room {}",
-        user_id, room_id
+        "Starting WebSocket session for userid {} username {} in room {}",
+        user_id, username, room_id
     );
-    let session = ChatSession::new(room_id, user_id, room_server.get_ref().clone());
+    let session = ChatSession::new(room_id, user_id, username.clone(), room_server.get_ref().clone());
     ws::start(session, &req, stream)
 }
 
