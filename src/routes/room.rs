@@ -1,13 +1,13 @@
-use actix_web::{HttpResponse, Responder, web, HttpRequest, HttpMessage};
-use sqlx::SqlitePool;
-use serde::{Deserialize, Serialize};
-use utoipa::ToSchema;
-use crate::models::response::{MessageResponse, ErrorResponse};
-use actix::Addr;
-use actix_web_actors::ws;
+use crate::models::presence::{GetRoomPresence, UserPresence};
+use crate::models::response::{ErrorResponse, MessageResponse};
 use crate::websockets::chat_session::{ChatSession, RoomServer};
+use actix::Addr;
+use actix_web::{web, HttpMessage, HttpRequest, HttpResponse, Responder};
+use actix_web_actors::ws;
 use log::{error, info};
-use crate::models::presence::{UserPresence, GetRoomPresence};
+use serde::{Deserialize, Serialize};
+use sqlx::SqlitePool;
+use utoipa::ToSchema;
 
 #[derive(Deserialize, ToSchema)]
 pub struct RoomInfo {
@@ -58,7 +58,10 @@ pub async fn get_rooms(pool: web::Data<SqlitePool>, req: HttpRequest) -> impl Re
             Ok(rooms) => {
                 info!("Retrieved {} rooms from the database", rooms.len());
                 for room in &rooms {
-                    info!("Room ID: {}, Room Name: {}, User ID: {}", room.room_id, room.room_name, room.user_id);
+                    info!(
+                        "Room ID: {}, Room Name: {}, User ID: {}",
+                        room.room_id, room.room_name, room.user_id
+                    );
                 }
                 HttpResponse::Ok().json(RoomsResponse {
                     req_user_id: *user_id,
@@ -68,11 +71,15 @@ pub async fn get_rooms(pool: web::Data<SqlitePool>, req: HttpRequest) -> impl Re
             Err(e) => {
                 info!("Failed to retrieve rooms: {}", e);
                 // A failure to retrieve rooms typically indicates a server-side problem, such as a database connectivity issue.
-                HttpResponse::InternalServerError().json(ErrorResponse { error: "Failed to retrieve rooms".into() })
+                HttpResponse::InternalServerError().json(ErrorResponse {
+                    error: "Failed to retrieve rooms".into(),
+                })
             }
         }
     } else {
-        HttpResponse::Unauthorized().json(ErrorResponse { error: "User ID missing in token".into() })
+        HttpResponse::Unauthorized().json(ErrorResponse {
+            error: "User ID missing in token".into(),
+        })
     }
 }
 
@@ -98,13 +105,17 @@ pub async fn create_room(
     if let Some(user_id) = req.extensions().get::<i64>() {
         match sqlx::query!(
             "INSERT INTO rooms (room_name, user_id) VALUES (?, ?)",
-            room_info.room_name, user_id
+            room_info.room_name,
+            user_id
         )
         .execute(pool.get_ref())
         .await
         {
             Ok(result) => {
-                info!("Room '{}' created successfully by user '{}'", room_info.room_name, user_id);
+                info!(
+                    "Room '{}' created successfully by user '{}'",
+                    room_info.room_name, user_id
+                );
                 HttpResponse::Created().json(Room {
                     room_id: result.last_insert_rowid(),
                     room_name: room_info.room_name.clone(),
@@ -113,11 +124,15 @@ pub async fn create_room(
             }
             Err(e) => {
                 info!("Failed to create room: {}", e);
-                HttpResponse::BadRequest().json(ErrorResponse { error: "Error creating room".into() })
+                HttpResponse::BadRequest().json(ErrorResponse {
+                    error: "Error creating room".into(),
+                })
             }
         }
     } else {
-        HttpResponse::Unauthorized().json(ErrorResponse { error: "User ID missing in token".into() })
+        HttpResponse::Unauthorized().json(ErrorResponse {
+            error: "User ID missing in token".into(),
+        })
     }
 }
 
@@ -153,7 +168,9 @@ pub async fn get_room_members(
     .unwrap_or(false);
 
     if !room_exists {
-        return HttpResponse::NotFound().json(ErrorResponse { error: "Room not found".into() });
+        return HttpResponse::NotFound().json(ErrorResponse {
+            error: "Room not found".into(),
+        });
     }
 
     // Fetch members of the room with avatar_url
@@ -207,28 +224,42 @@ pub async fn add_room_member(
         .unwrap_or(false);
 
         if !room_exists {
-            return HttpResponse::NotFound().json(ErrorResponse { error: "Room does not exist".into() });
+            return HttpResponse::NotFound().json(ErrorResponse {
+                error: "Room does not exist".into(),
+            });
         }
 
         match sqlx::query!(
             "INSERT INTO user_rooms (user_id, room_id) VALUES (?, ?)",
-            user_id, room_id
+            user_id,
+            room_id
         )
         .execute(pool.get_ref())
         .await
         {
             Ok(_) => {
                 info!("User '{}' added to room '{}'", user_id, room_id);
-                HttpResponse::Ok().json(MessageResponse { message: "User added to the room successfully".into() })
+                HttpResponse::Ok().json(MessageResponse {
+                    message: "User added to the room successfully".into(),
+                })
             }
             Err(e) => {
                 info!("Failed to add user to room: {}", e);
-                HttpResponse::BadRequest().json(ErrorResponse { error: "Error adding user to room".into() })
+                HttpResponse::BadRequest().json(ErrorResponse {
+                    error: "Error adding user to room".into(),
+                })
             }
         }
     } else {
-        HttpResponse::Unauthorized().json(ErrorResponse { error: "User ID missing in token".into() })
+        HttpResponse::Unauthorized().json(ErrorResponse {
+            error: "User ID missing in token".into(),
+        })
     }
+}
+
+#[derive(Deserialize)]
+struct QueryParams {
+    user_id: i64,
 }
 
 #[utoipa::path(
@@ -236,11 +267,11 @@ pub async fn add_room_member(
     path = "/ws/rooms/{room_id}",
     params(
         ("room_id" = i64, Path, description = "Room ID to join via WebSocket"),
-        ("Authorization" = String, Header, description = "Bearer <JWT Token>")
+        ("user_id" = i64, Query, description = "User ID for authentication")
     ),
     responses(
         (status = 101, description = "Switching Protocols to WebSocket"),
-        (status = 401, description = "Unauthorized: User ID missing in token", body = ErrorResponse),
+        (status = 401, description = "Unauthorized: User ID missing or invalid", body = ErrorResponse),
         (status = 404, description = "Not Found: Room does not exist or user is not a member", body = ErrorResponse),
         (status = 500, description = "Internal Server Error", body = ErrorResponse),
     )
@@ -252,17 +283,20 @@ pub async fn join_room_ws(
     room_server: web::Data<Addr<RoomServer>>,
     pool: web::Data<SqlitePool>,
 ) -> Result<HttpResponse, actix_web::Error> {
-    // Extract user_id from the request extensions set by AuthMiddleware
-    let user_id = match req.extensions().get::<i64>() {
-        Some(id) => *id,
-        None => {
-            error!("User ID not found in request extensions");
-            return Ok(HttpResponse::Unauthorized().json(ErrorResponse { error: "User ID not found".to_string() }));
-        }
-    };
-
     let room_id = room_id.into_inner();
     info!("Attempting to join room with ID: {}", room_id);
+
+    // Extract user_id from query parameters
+    let query_params = match web::Query::<QueryParams>::from_query(req.query_string()) {
+        Ok(params) => params,
+        Err(_) => {
+            error!("user_id query parameter is missing or invalid");
+            return Ok(HttpResponse::Unauthorized().json(ErrorResponse {
+                error: "Missing or invalid user_id".to_string(),
+            }));
+        }
+    };
+    let user_id = query_params.user_id;
 
     // Check if the room exists
     let room_exists = match sqlx::query_scalar!(
@@ -272,19 +306,19 @@ pub async fn join_room_ws(
     .fetch_one(pool.get_ref())
     .await
     {
-        Ok(exists) => {
-            info!("Room existence check for room_id {}: {}", room_id, exists != 0);
-            exists != 0
-        }
+        Ok(exists) => exists != 0,
         Err(e) => {
             error!("Database error checking if room exists: {}", e);
-            return Ok(HttpResponse::InternalServerError().json(ErrorResponse { error: "Database error".to_string() }));
+            return Ok(HttpResponse::InternalServerError().json(ErrorResponse {
+                error: "Database error".to_string(),
+            }));
         }
     };
 
     if !room_exists {
-        error!("Room does not exist for room_id: {}", room_id);
-        return Ok(HttpResponse::NotFound().json(ErrorResponse { error: "Room does not exist".to_string() }));
+        return Ok(HttpResponse::NotFound().json(ErrorResponse {
+            error: "Room does not exist".to_string(),
+        }));
     }
 
     // Check if the user is a member of the room
@@ -296,29 +330,31 @@ pub async fn join_room_ws(
     .fetch_one(pool.get_ref())
     .await
     {
-        Ok(member) => {
-            info!("Membership check for user_id {} in room_id {}: {}", user_id, room_id, member != 0);
-            member != 0
-        }
+        Ok(member) => member != 0,
         Err(e) => {
-            error!("Database error checking if user is a member of the room: {}", e);
-            return Ok(HttpResponse::InternalServerError().json(ErrorResponse { error: "Database error".to_string() }));
+            error!(
+                "Database error checking if user is a member of the room: {}",
+                e
+            );
+            return Ok(HttpResponse::InternalServerError().json(ErrorResponse {
+                error: "Database error".to_string(),
+            }));
         }
     };
 
     if !is_member {
-        error!("User {} is not a member of room {}", user_id, room_id);
-        return Ok(HttpResponse::NotFound().json(ErrorResponse { error: "User is not a member of the room".to_string() }));
+        return Ok(HttpResponse::NotFound().json(ErrorResponse {
+            error: "User is not a member of the room".to_string(),
+        }));
     }
 
-    // Create a new chat session with the extracted user_id
-    info!("Starting WebSocket session for user {} in room {}", user_id, room_id);
+    // Start WebSocket session
+    info!(
+        "Starting WebSocket session for user {} in room {}",
+        user_id, room_id
+    );
     let session = ChatSession::new(room_id, user_id, room_server.get_ref().clone());
-    // ws::start function starts the WebSocket session and thus the ChatSession actor
-    // This is where ChatSession::started would be called if implemented
     ws::start(session, &req, stream)
-    // When the WebSocket connection closes, actix will automatically call ChatSession::stopped
-    // if it is implemented, ending the actor’s lifecycle and cleaning up resources
 }
 
 #[utoipa::path(
@@ -339,7 +375,10 @@ pub async fn get_user_presence(
     room_server: web::Data<Addr<RoomServer>>,
 ) -> Result<HttpResponse, actix_web::Error> {
     // Send the GetRoomPresence message to the RoomServer actor to fetch presence data.
-    match room_server.send(GetRoomPresence { room_id: *room_id }).await {
+    match room_server
+        .send(GetRoomPresence { room_id: *room_id })
+        .await
+    {
         Ok(presence) if !presence.is_empty() => {
             Ok(HttpResponse::Ok().json(presence)) // Return the list of users' presence statuses
         }
