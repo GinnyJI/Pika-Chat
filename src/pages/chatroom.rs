@@ -10,6 +10,11 @@ use crate::components::header::Header;
 use crate::services::utils::decode_username;
 use crate::services::utils::decode_userid;
 use crate::services::auth::logout;
+use crate::services::room::RoomMember;
+use crate::services::room::get_room_members;
+use crate::components::panel::Panel;
+use crate::components::room_member_list::RoomMembersList;
+use crate::components::message::{Message, MessageType};
 
 pub enum Msg {
     SendMessage,
@@ -21,6 +26,9 @@ pub enum Msg {
     LogoutClicked,
     LogoutSuccess,
     LogoutFailure(String),
+    FetchRoomMembers,
+    FetchRoomMembersSuccess(Vec<RoomMember>),
+    FetchRoomMembersError(String),
 }
 
 #[derive(Clone, Properties, PartialEq)]
@@ -37,19 +45,21 @@ pub struct ChatRoom {
     username: String,
     avatar_url: Option<String>,
     userid: String,
+    room_members: Vec<RoomMember>,
+    room_members_error: Option<String>,
 }
 
 impl Component for ChatRoom {
     type Message = Msg;
     type Properties = Props;
 
-    fn create(_ctx: &Context<Self>) -> Self {
+    fn create(ctx: &Context<Self>) -> Self {
         let token = LocalStorage::get::<String>("jwtToken").ok();
         let username = token.as_ref().and_then(|t| decode_username(t)).unwrap_or_default();
         let userid = token.as_ref().and_then(|t| decode_userid(t)).unwrap_or_default();
         let avatar_url = LocalStorage::get::<String>("avatarUrl").ok(); // Retrieve avatar URL from local storage
 
-        Self {
+        let component = Self {
             token,
             ws_service: None,
             message_input: String::new(),
@@ -58,7 +68,15 @@ impl Component for ChatRoom {
             username,
             avatar_url,
             userid,
-        }
+            room_members: vec![],
+            room_members_error: None,
+        };
+
+        // Fetch room members on component creation
+        let link = ctx.link().clone();
+        link.send_message(Msg::FetchRoomMembers);
+
+        component
     }
 
     fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
@@ -116,6 +134,29 @@ impl Component for ChatRoom {
                 navigator.push(&Route::Home);
                 true
             }
+            Msg::FetchRoomMembers => {
+                if let Some(token) = self.token.clone() {
+                    let room_id: i64 = ctx.props().room_id;
+                    let link = ctx.link().clone();
+
+                    spawn_local(async move {
+                        match get_room_members(&token, room_id).await {
+                            Ok(members) => link.send_message(Msg::FetchRoomMembersSuccess(members)),
+                            Err(err) => link.send_message(Msg::FetchRoomMembersError(err)),
+                        }
+                    });
+                }
+                false
+            }
+            Msg::FetchRoomMembersSuccess(members) => {
+                self.room_members = members;
+                self.room_members_error = None;
+                true
+            }
+            Msg::FetchRoomMembersError(err) => {
+                self.room_members_error = Some(err);
+                true
+            }
         }
     }
 
@@ -152,28 +193,67 @@ impl Component for ChatRoom {
     }
 
     fn view(&self, ctx: &Context<Self>) -> Html {
-        let onclick_logout = ctx.link().callback(|_| Msg::LogoutClicked);
-        let on_message_input = ctx.link().callback(|e: InputEvent| {
-            let input: HtmlInputElement = e.target_unchecked_into();
-            Msg::UpdateMessageInput(input.value())
-        });
-
-        let on_send_message = ctx.link().callback(|_| Msg::SendMessage);
+        // TODO: make the member list a reactive state
+        // TODO: add avatar for the members
+        let room_members_view = if !self.room_members.is_empty() {
+            html! {
+                <Panel>
+                    <h2 style="
+                        font-size: 1.5rem; 
+                        font-weight: bold; 
+                        margin-bottom: 1rem; 
+                        color: #1f2937; 
+                        text-align: center;
+                    ">
+                        {"Room Members"}
+                    </h2>
+                    <RoomMembersList members={self.room_members.clone()} />
+                </Panel>
+            }
+        } else if let Some(error) = &self.room_members_error {
+            html! {
+                <Panel>
+                    <h2 style="
+                        font-size: 1.5rem; 
+                        font-weight: bold; 
+                        margin-bottom: 1rem; 
+                        color: #1f2937; 
+                        text-align: center;
+                    ">
+                        {"Room Members"}
+                    </h2>
+                    <Message message={format!("Failed to load room members: {}", error)} message_type={MessageType::Error} />
+                </Panel>
+            }
+        } else {
+            html! {
+                <Panel>
+                    <h2 style="
+                        font-size: 1.5rem; 
+                        font-weight: bold; 
+                        margin-bottom: 1rem; 
+                        color: #1f2937; 
+                        text-align: center;
+                    ">
+                        {"Room Members"}
+                    </h2>
+                    <Message message={"Loading room members...".to_string()} message_type={MessageType::Loading} />
+                </Panel>
+            }
+        };
 
         html! {
             <div style="min-height: 100vh; display: flex; flex-direction: column; background-color: #f9fafb;">
-                // Header Section
-                <Header 
+                <Header
                     username={Some(self.username.clone())}
                     avatar_url={self.avatar_url.clone()}
-                    on_logout={onclick_logout}
+                    on_logout={ctx.link().callback(|_| Msg::LogoutClicked)}
                 />
-
-                // Main Section
-                <main style="flex: 1; padding: 2rem; display: flex; flex-direction: column; align-items: center; text-align: center;">
-                    <h1 style="font-size: 2.5rem; font-weight: bold; color: #1f2937; margin-bottom: 1.5rem;">
-                        { format!("Chat Room: {}", ctx.props().room_id) }
-                    </h1>
+                {room_members_view} // Left panel with room members
+                <main
+                    style="flex: 1; padding: 2rem; display: flex; flex-direction: column; align-items: center; text-align: center;"
+                >
+                    <h1 style="font-size: 2.5rem; font-weight: bold; color: #1f2937;">{ format!("Chat Room: {}", ctx.props().room_id) }</h1>
                     <div style="width: 100%; max-width: 800px; margin-bottom: 2rem; text-align: left;">
                         <div style="border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 1rem; max-height: 400px; overflow-y: auto; background-color: #ffffff;">
                             {
@@ -186,24 +266,23 @@ impl Component for ChatRoom {
                             <input
                                 type="text"
                                 value={self.message_input.clone()}
-                                oninput={on_message_input}
+                                oninput={ctx.link().callback(|e: InputEvent| {
+                                    let input: HtmlInputElement = e.target_unchecked_into();
+                                    Msg::UpdateMessageInput(input.value())
+                                })}
                                 placeholder="Type your message"
                                 style="flex: 1; padding: 0.75rem; border: 1px solid #e5e7eb; border-radius: 0.5rem; margin-right: 0.5rem;"
                             />
                             <button
-                                onclick={on_send_message}
-                                style="padding: 0.75rem 1.5rem; background-color: #1f2937; color: #ffffff; border: none; border-radius: 0.5rem; cursor: pointer; transition: background-color 0.2s;"
+                                onclick={ctx.link().callback(|_| Msg::SendMessage)}
+                                style="padding: 0.75rem 1.5rem; background-color: #1f2937; color: #ffffff; border: none; border-radius: 0.5rem; cursor: pointer;"
                             >
                                 {"Send"}
                             </button>
                         </div>
-                        if let Some(error) = &self.error {
-                            <p style="color: red; margin-top: 1rem;">{ format!("Error: {}", error) }</p>
-                        }
                     </div>
                 </main>
 
-                // Footer Section
                 <Footer />
             </div>
         }

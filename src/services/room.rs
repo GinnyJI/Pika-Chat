@@ -21,7 +21,7 @@ pub struct RoomsResponse {
     pub rooms: Vec<Room>,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone, PartialEq)]
 #[allow(dead_code)]
 pub struct RoomMember {
     pub user_id: i64,
