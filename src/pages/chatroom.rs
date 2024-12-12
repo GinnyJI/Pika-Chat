@@ -33,7 +33,8 @@ pub struct ChatRoom {
     ws_service: Option<WebSocketService>,
     message_input: String,
     messages: Vec<String>,
-    error: Option<String>,    username: String,
+    error: Option<String>,
+    username: String,
     avatar_url: Option<String>,
     userid: String,
 }
@@ -48,7 +49,8 @@ impl Component for ChatRoom {
         let userid = token.as_ref().and_then(|t| decode_userid(t)).unwrap_or_default();
         let avatar_url = LocalStorage::get::<String>("avatarUrl").ok(); // Retrieve avatar URL from local storage
 
-        Self {            token,
+        Self {
+            token,
             ws_service: None,
             message_input: String::new(),
             messages: vec![],
