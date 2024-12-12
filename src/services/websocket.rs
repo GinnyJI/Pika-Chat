@@ -1,5 +1,4 @@
 use gloo::net::websocket::{futures::WebSocket, Message};
-use gloo::utils::window;
 use wasm_bindgen_futures::spawn_local;
 use yew::prelude::*;
 use futures::{StreamExt, SinkExt};
@@ -19,7 +18,7 @@ impl WebSocketService {
         userid: &str,
         sender: Callback<String>,
         // token: &str,
-        on_error: Callback<String>,
+        _on_error: Callback<String>,
         on_connect: Callback<()>,
     ) -> Self {
         let ws_url = format!(
@@ -27,7 +26,7 @@ impl WebSocketService {
             room_id, userid
         );
     
-        let mut ws = WebSocket::open(&ws_url).expect("Failed to open WebSocket");
+        let ws = WebSocket::open(&ws_url).expect("Failed to open WebSocket");
     
         let (write, mut read) = ws.split();
     
@@ -68,7 +67,7 @@ impl WebSocketService {
     }
 
     pub fn close(&mut self) {
-        if let Some(mut write) = self.write.take() {
+        if let Some(write) = self.write.take() {
             spawn_local(async move {
                 let mut write = write.borrow_mut(); // Borrow mutable access
                 write.close().await.ok();

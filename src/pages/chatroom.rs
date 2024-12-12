@@ -42,7 +42,7 @@ impl Component for ChatRoom {
     type Message = Msg;
     type Properties = Props;
 
-    fn create(ctx: &Context<Self>) -> Self {
+    fn create(_ctx: &Context<Self>) -> Self {
         let token = LocalStorage::get::<String>("jwtToken").ok();
         let username = token.as_ref().and_then(|t| decode_username(t)).unwrap_or_default();
         let userid = token.as_ref().and_then(|t| decode_userid(t)).unwrap_or_default();
