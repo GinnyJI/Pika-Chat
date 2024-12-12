@@ -35,6 +35,8 @@ pub fn header(props: &HeaderProps) -> Html {
                                     <span>{format!("Welcome, {}", username)}</span>
                                     {
                                         if let Some(avatar_url) = &props.avatar_url {
+                                            // Log the avatar_url when it is displayed
+                                            gloo::console::log!(format!("Avatar URL: {}", avatar_url));
                                             html! {
                                                 <img src={avatar_url.clone()} alt="User Avatar" class="nav-avatar" />
                                             }
