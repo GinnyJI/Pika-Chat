@@ -16,14 +16,15 @@ pub struct WebSocketService {
 impl WebSocketService {
     pub fn new(
         room_id: &str,
+        userid: &str,
         sender: Callback<String>,
         // token: &str,
         on_error: Callback<String>,
         on_connect: Callback<()>,
     ) -> Self {
         let ws_url = format!(
-            "ws://127.0.0.1:8080/ws/rooms/{}?user_id=1",
-            room_id
+            "ws://127.0.0.1:8080/ws/rooms/{}?user_id={}",
+            room_id, userid
         );
     
         let mut ws = WebSocket::open(&ws_url).expect("Failed to open WebSocket");

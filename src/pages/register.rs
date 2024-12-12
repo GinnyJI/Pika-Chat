@@ -84,11 +84,11 @@ impl Component for Register {
 
     fn view(&self, ctx: &Context<Self>) -> Html {
         let avatar_options = vec![
-            "static/avatar1.png".to_string(),
-            "static/avatar2.png".to_string(),
-            "static/avatar3.png".to_string(),
-            "static/avatar4.png".to_string(),
-            "static/avatar5.png".to_string(),
+            "/static/avatar1.png".to_string(),
+            "/static/avatar2.png".to_string(),
+            "/static/avatar3.png".to_string(),
+            "/static/avatar4.png".to_string(),
+            "/static/avatar5.png".to_string(),
         ];
 
         html! {
