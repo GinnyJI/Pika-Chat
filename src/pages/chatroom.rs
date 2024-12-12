@@ -5,6 +5,11 @@ use wasm_bindgen_futures::spawn_local;
 use crate::services::websocket::WebSocketService;
 use crate::routes::Route;
 use web_sys::HtmlInputElement;
+use crate::components::footer::Footer;
+use crate::components::header::Header;
+use crate::services::utils::decode_username;
+use crate::services::utils::decode_userid;
+use crate::services::auth::logout;
 
 pub enum Msg {
     SendMessage,
@@ -13,6 +18,9 @@ pub enum Msg {
     WebSocketConnected,
     WebSocketDisconnected,
     WebSocketError(String),
+    LogoutClicked,
+    LogoutSuccess,
+    LogoutFailure(String),
 }
 
 #[derive(Clone, Properties, PartialEq)]
@@ -21,11 +29,13 @@ pub struct Props {
 }
 
 pub struct ChatRoom {
-    // token: Option<String>,
+    token: Option<String>,
     ws_service: Option<WebSocketService>,
     message_input: String,
     messages: Vec<String>,
-    error: Option<String>,
+    error: Option<String>,    username: String,
+    avatar_url: Option<String>,
+    userid: String,
 }
 
 impl Component for ChatRoom {
@@ -33,18 +43,24 @@ impl Component for ChatRoom {
     type Properties = Props;
 
     fn create(ctx: &Context<Self>) -> Self {
-        // let token = LocalStorage::get::<String>("jwtToken").ok();
+        let token = LocalStorage::get::<String>("jwtToken").ok();
+        let username = token.as_ref().and_then(|t| decode_username(t)).unwrap_or_default();
+        let userid = token.as_ref().and_then(|t| decode_userid(t)).unwrap_or_default();
+        let avatar_url = LocalStorage::get::<String>("avatarUrl").ok(); // Retrieve avatar URL from local storage
 
-        Self {
-            // token,
+        Self {            token,
             ws_service: None,
             message_input: String::new(),
             messages: vec![],
             error: None,
+            username,
+            avatar_url,
+            userid,
         }
     }
 
     fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
+        let navigator = ctx.link().navigator().expect("No navigator available");
         match msg {
             Msg::SendMessage => {
                 if let Some(ws_service) = &mut self.ws_service {
@@ -73,12 +89,38 @@ impl Component for ChatRoom {
                 self.error = Some(error);
                 true
             }
+            Msg::LogoutClicked => {
+                if let Some(token) = self.token.clone() {
+                    let link = ctx.link().clone();
+                    spawn_local(async move {
+                        let result = logout(&token).await;
+                        match result {
+                            Ok(_) => link.send_message(Msg::LogoutSuccess),
+                            Err(err) => link.send_message(Msg::LogoutFailure(err)),
+                        }
+                    });
+                } else {
+                    navigator.push(&Route::Home);
+                }
+                false
+            }
+            Msg::LogoutSuccess => {
+                LocalStorage::delete("jwtToken");
+                navigator.push(&Route::Home);
+                true
+            }
+            Msg::LogoutFailure(_error) => {
+                LocalStorage::delete("jwtToken");
+                navigator.push(&Route::Home);
+                true
+            }
         }
     }
 
     fn rendered(&mut self, ctx: &Context<Self>, _first_render: bool) {
         if self.ws_service.is_none() {
             let room_id = ctx.props().room_id;
+            let userid = self.userid.clone();
             let link = ctx.link().clone();
 
             let link_on_message = link.clone();
@@ -95,6 +137,7 @@ impl Component for ChatRoom {
 
             let ws_service = WebSocketService::new(
                 &room_id.to_string(),
+                &userid.to_string(),
                 on_message,
                 // token,
                 on_error,
@@ -107,6 +150,7 @@ impl Component for ChatRoom {
     }
 
     fn view(&self, ctx: &Context<Self>) -> Html {
+        let onclick_logout = ctx.link().callback(|_| Msg::LogoutClicked);
         let on_message_input = ctx.link().callback(|e: InputEvent| {
             let input: HtmlInputElement = e.target_unchecked_into();
             Msg::UpdateMessageInput(input.value())
@@ -117,18 +161,11 @@ impl Component for ChatRoom {
         html! {
             <div style="min-height: 100vh; display: flex; flex-direction: column; background-color: #f9fafb;">
                 // Header Section
-                <header style="background-color: #facc15; padding: 1rem; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); position: static; width: 100%;">
-                    <nav style="max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center;">
-                        <div style="font-size: 1.5rem; font-weight: bold; color: #1f2937;">
-                            <a href="/">{"Pika Chat"}</a>
-                        </div>
-                        <div style="display: flex; gap: 1rem;">
-                            <a href="/dashboard" style="color: #1f2937; text-decoration: none; font-weight: 500; transition: color 0.2s;">
-                                {"Back to Dashboard"}
-                            </a>
-                        </div>
-                    </nav>
-                </header>
+                <Header 
+                    username={Some(self.username.clone())}
+                    avatar_url={self.avatar_url.clone()}
+                    on_logout={onclick_logout}
+                />
 
                 // Main Section
                 <main style="flex: 1; padding: 2rem; display: flex; flex-direction: column; align-items: center; text-align: center;">
@@ -165,11 +202,7 @@ impl Component for ChatRoom {
                 </main>
 
                 // Footer Section
-                <footer style="background-color: #1f2937; color: #e5e7eb; text-align: center; padding: 1rem; width: 100%;">
-                    <p style="font-size: 0.875rem;">
-                        {"© 2024 Pika Chat. All rights reserved."}
-                    </p>
-                </footer>
+                <Footer />
             </div>
         }
     }
