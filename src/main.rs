@@ -90,7 +90,6 @@ async fn main() -> std::io::Result<()> {
             .app_data(web::Data::new(room_server.clone()))
             .service(
                 web::resource("/ws/rooms/{room_id}")
-                    // .wrap(AuthMiddleware) // Add authentication middleware here
                     .route(web::get().to(join_room_ws)),
             )
             // Scope all routes under `/api`

@@ -299,21 +299,14 @@ pub async fn join_room_ws(
     let user_id = query_params.user_id;
 
     // Check if the room exists
-    let room_exists = match sqlx::query_scalar!(
-        "SELECT EXISTS(SELECT 1 FROM rooms WHERE room_id = ?)",
+    let room_exists = sqlx::query!(
+        "SELECT 1 AS exists_flag FROM rooms WHERE room_id = ?",
         room_id
     )
-    .fetch_one(pool.get_ref())
+    .fetch_optional(pool.get_ref())
     .await
-    {
-        Ok(exists) => exists != 0,
-        Err(e) => {
-            error!("Database error checking if room exists: {}", e);
-            return Ok(HttpResponse::InternalServerError().json(ErrorResponse {
-                error: "Database error".to_string(),
-            }));
-        }
-    };
+    .map(|row| row.is_some())
+    .unwrap_or(false);
 
     if !room_exists {
         return Ok(HttpResponse::NotFound().json(ErrorResponse {
@@ -321,33 +314,42 @@ pub async fn join_room_ws(
         }));
     }
 
-    // Check if the user is a member of the room
-    let is_member = match sqlx::query_scalar!(
-        "SELECT EXISTS(SELECT 1 FROM user_rooms WHERE room_id = ? AND user_id = ?)",
-        room_id,
-        user_id
+    // Check if the user is already in the room
+    let user_in_room = sqlx::query!(
+        "SELECT 1 AS exists_flag FROM user_rooms WHERE user_id = ? AND room_id = ?",
+        user_id,
+        room_id
     )
-    .fetch_one(pool.get_ref())
+    .fetch_optional(pool.get_ref())
     .await
-    {
-        Ok(member) => member != 0,
-        Err(e) => {
-            error!(
-                "Database error checking if user is a member of the room: {}",
-                e
-            );
-            return Ok(HttpResponse::InternalServerError().json(ErrorResponse {
-                error: "Database error".to_string(),
-            }));
-        }
-    };
+    .map(|row| row.is_some())
+    .unwrap_or(false);
 
-    if !is_member {
-        return Ok(HttpResponse::NotFound().json(ErrorResponse {
-            error: "User is not a member of the room".to_string(),
-        }));
+    if user_in_room {
+        info!("User '{}' is already in room '{}'", user_id, room_id);
+    } else {
+        // Attempt to add the user to the room
+        match sqlx::query!(
+            "INSERT INTO user_rooms (user_id, room_id) VALUES (?, ?)",
+            user_id,
+            room_id
+        )
+        .execute(pool.get_ref())
+        .await
+        {
+            Ok(_) => {
+                info!("User '{}' added to room '{}'", user_id, room_id);
+            }
+            Err(e) => {
+                error!("Failed to add user to room '{}': {}", room_id, e);
+                return Ok(HttpResponse::BadRequest().json(ErrorResponse {
+                    error: "Error adding user to room".to_string(),
+                }));
+            }
+        }
     }
 
+    // Fetch the username for WebSocket session initialization
     let username = match sqlx::query_scalar!(
         "SELECT username FROM users WHERE user_id = ?",
         user_id
