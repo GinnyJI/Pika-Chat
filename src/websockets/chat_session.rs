@@ -2,15 +2,19 @@ use actix::{Actor, StreamHandler, Context, Addr, Message, Handler, AsyncContext}
 use actix_web_actors::ws;
 use std::collections::{HashMap, HashSet};
 use crate::models::presence::{GetRoomPresence, UserPresence};
+use serde::Serialize;
 
 // Define RoomId and UserId types for better readability
 pub type RoomId = i64;
 pub type UserId = i64;
 
 // Message type for broadcasting a message within a room.
+#[derive(Serialize)]
 pub struct BroadcastMessage {
     pub room_id: RoomId,
     pub message: String,
+    pub is_system: bool,
+    pub username: String,
 }
 
 impl Message for BroadcastMessage {
@@ -60,9 +64,30 @@ impl RoomServer {
 
     // Adds a user to a specified room.
     pub fn add_user(&mut self, room_id: RoomId, user_id: UserId, addr: Addr<ChatSession>) {
-        self.rooms.entry(room_id).or_insert_with(HashSet::new).insert(user_id);
-        self.user_sessions.insert(user_id, addr);
-        self.user_presence.insert(user_id, true);                                // Set user as online
+        // self.rooms.entry(room_id).or_insert_with(HashSet::new).insert(user_id);
+        // self.user_sessions.insert(user_id, addr);
+        // self.user_presence.insert(user_id, true);
+        if self.rooms.contains_key(&room_id) && self.rooms[&room_id].contains(&user_id) {
+            log::warn!(
+                "User {} is already in room {}. Skipping re-addition.",
+                user_id,
+                room_id
+            );
+        } else {
+            self.rooms
+                .entry(room_id)
+                .or_insert_with(HashSet::new)
+                .insert(user_id);
+            self.user_sessions.insert(user_id, addr);
+            self.user_presence.insert(user_id, true); // Set user as online
+    
+            log::info!(
+                "User {} added to room {}. Current users in room: {:?}",
+                user_id,
+                room_id,
+                self.rooms.get(&room_id)
+            );
+        }
     }
 
     // Removes a user from a specified room, marking them as offline
@@ -77,20 +102,29 @@ impl RoomServer {
         self.user_sessions.remove(&user_id);          // Remove user's active session
     }    
     
-    // Broadcasts a message to all users in a specified room.
-    fn broadcast_to_room(&self, room_id: RoomId, message: &str) {
+    fn broadcast_to_room(&self, room_id: RoomId, message: &str, is_system: bool, sender_username: String) {
         if let Some(user_ids) = self.rooms.get(&room_id) {
             for &user_id in user_ids {
                 if let Some(addr) = self.user_sessions.get(&user_id) {
-                    if let Some(username) = self.user_names.get(&user_id) {
+                    // Create a BroadcastMessage and serialize it
+                    let broadcast_message = BroadcastMessage {
+                        room_id,
+                        message: message.to_string(),
+                        is_system,
+                        username: sender_username.clone(), // Sender's username
+                    };
+    
+                    if let Ok(serialized_message) = serde_json::to_string(&broadcast_message) {
                         addr.do_send(ChatMessage {
-                            message: format!("{}: {}", username, message),
+                            message: serialized_message,
                         });
+                    } else {
+                        eprintln!("Failed to serialize BroadcastMessage for room {}", room_id);
                     }
                 }
             }
         }
-    }
+    }    
 
     // Sets a user's presence to online.
     pub fn set_user_online(&mut self, user_id: UserId) {
@@ -134,8 +168,13 @@ impl Handler<BroadcastMessage> for RoomServer {
     type Result = ();
 
     fn handle(&mut self, msg: BroadcastMessage, _: &mut Self::Context) {
-        println!("Broadcasting to room {}: {}", msg.room_id, msg.message);
-        self.broadcast_to_room(msg.room_id, &msg.message);
+        println!(
+            "Broadcasting to room {}: {} (is_system: {}, username: {})",
+            msg.room_id, msg.message, msg.is_system, msg.username
+        );
+        
+        // Pass all necessary parameters to the updated broadcast_to_room method
+        self.broadcast_to_room(msg.room_id, &msg.message, msg.is_system, msg.username.clone());
     }
 }
 
@@ -147,7 +186,6 @@ impl Handler<AddUser> for RoomServer {
         self.add_user(msg.room_id, msg.user_id, msg.addr.clone());
         self.user_names.insert(msg.user_id, msg.username.clone());
         self.set_user_online(msg.user_id);
-        println!("User {} ({}) added to room {}", msg.user_id, msg.username, msg.room_id);
     }
 }
 
@@ -210,10 +248,25 @@ impl Actor for ChatSession {
         self.room_server.do_send(BroadcastMessage {
             room_id: self.room_id,
             message: format!("⚡ Pika Pi! Welcome to the chat, {}!", self.username),
+            is_system: true,
+            username: self.username.clone(),
         });
+
+        log::info!(
+            "Welcome message sent for user_id: {}, username: {}, room_id: {}",
+            self.user_id,
+            self.username,
+            self.room_id
+        );
     }
 
     fn stopped(&mut self, _ctx: &mut Self::Context) {
+        log::info!(
+            "ChatSession stopped for user_id: {}, username: {}, room_id: {}",
+            self.user_id,
+            self.username,
+            self.room_id
+        );
         // Send RemoveUser message to RoomServer to stop tracking this user
         self.room_server.do_send(RemoveUser {
             room_id: self.room_id,
@@ -224,7 +277,15 @@ impl Actor for ChatSession {
         self.room_server.do_send(BroadcastMessage {
             room_id: self.room_id,
             message: format!("Pika-pika... Goodbye, {}!", self.username),
+            is_system: true,
+            username: self.username.clone(),
         });
+        log::info!(
+            "Goodbye message sent for user_id: {}, username: {}, room_id: {}",
+            self.user_id,
+            self.username,
+            self.room_id
+        );
     }
 }
 
@@ -246,6 +307,8 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChatSession {
             self.room_server.do_send(BroadcastMessage {
                 room_id: self.room_id,
                 message: format!("{}", text),
+                is_system: false,
+                username: self.username.clone(),
             });
 
             // Celebrate a great message with Easter egg
@@ -258,6 +321,8 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChatSession {
                 self.room_server.do_send(BroadcastMessage {
                     room_id: self.room_id,
                     message: format!("⚡ Pikachuuu~! Great message from {}!", self.username),
+                    is_system: true,
+                    username: self.username.clone(),
                 });
             }
         }
