@@ -1,0 +1,48 @@
+/* Styles specific to the Login page */
+.login-card {
+    max-width: 400px;
+    width: 100%;
+    background-color: #ffffff;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+}
+
+.login-heading {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #3f3025;
+    text-align: center;
+}
+
+.login-form {
+    margin-top: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.login-field {
+    text-align: left;
+}
+
+.error-message {
+    color: #dc2626;
+    font-size: 0.875rem;
+}
+
+.register-link {
+    margin-top: 1rem;
+    text-align: center;
+    font-size: 0.875rem;
+    color: #a36135;
+}
+
+.link {
+    color: #4f46e5;
+    text-decoration: none;
+}
+
+.link:hover {
+    text-decoration: underline;
+}

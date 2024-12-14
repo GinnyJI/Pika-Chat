@@ -1,0 +1,20 @@
+.pikachu-img {
+    width: 10rem;
+    height: 10rem;
+    margin-bottom: 2rem;
+}
+
+.button-primary {
+    background-color: #f7d346;
+    padding: 1rem 2rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    color: #3f3025;
+    text-decoration: none;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s;
+}
+
+.button-primary:hover {
+    transform: scale(1.05);
+}
