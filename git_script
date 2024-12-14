@@ -1,0 +1,43 @@
+#!/bin/bash
+
+# Show the current status of the repository
+git status
+
+# Add all changes to the staging area
+git add *
+
+# Determine the commit message
+if [ -z "$1" ]; then
+  read -p "Enter commit message (default: 'update'): " msg
+  msg=${msg:-update}
+else
+  msg="$1"
+fi
+
+# Commit changes with the determined message
+git commit -m "$msg"
+
+# Check if commit was successful
+if [ $? -eq 0 ]; then
+  # Display the current branch
+  current_branch=$(git branch --show-current)
+  echo "Pushing changes to branch: $current_branch"
+  
+  # Push changes to the remote repository
+  git push
+
+  # Check if push was successful
+  if [ $? -eq 0 ]; then
+    echo "Changes pushed successfully."
+  else
+    echo "Failed to push changes. Please check your network connection and remote repository settings."
+  fi
+else
+  echo "Commit failed. Please resolve any issues and try again."
+fi
+
+# Optionally clear the terminal
+read -p "Clear terminal? (y/n): " clear_terminal
+if [ "$clear_terminal" == "y" ]; then
+  clear
+fi
