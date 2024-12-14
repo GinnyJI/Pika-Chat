@@ -3,6 +3,7 @@ use yew_router::prelude::*;
 use gloo::storage::{LocalStorage, Storage};
 use wasm_bindgen_futures::spawn_local;
 use crate::services::websocket::{WebSocketService, BroadcastMessage};
+use crate::services::room::{get_user_presence, UserPresence};
 use crate::routes::Route;
 use web_sys::HtmlInputElement;
 use crate::components::footer::Footer;
@@ -28,6 +29,9 @@ pub enum Msg {
     FetchRoomMembers,
     FetchRoomMembersSuccess(Vec<RoomMember>),
     FetchRoomMembersError(String),
+    FetchUserPresence,
+    FetchUserPresenceSuccess(Vec<UserPresence>),
+    FetchUserPresenceError(String),
 }
 
 #[derive(Clone, Properties, PartialEq)]
@@ -47,6 +51,8 @@ pub struct ChatRoom {
     userid: String,
     room_members: Vec<RoomMember>,
     room_members_error: Option<String>,
+    user_presence: Vec<UserPresence>,
+    user_presence_error: Option<String>,
 }
 
 impl Component for ChatRoom {
@@ -70,11 +76,16 @@ impl Component for ChatRoom {
             userid,
             room_members: vec![],
             room_members_error: None,
+            user_presence: vec![],
+            user_presence_error: None,
         };
 
         // Fetch room members on component creation
         let link = ctx.link().clone();
         link.send_message(Msg::FetchRoomMembers);
+
+        // Fetch user presence on component creation
+        link.send_message(Msg::FetchUserPresence);
 
         component
     }
@@ -157,6 +168,29 @@ impl Component for ChatRoom {
                 self.room_members_error = Some(err);
                 true
             }
+            Msg::FetchUserPresence => {
+                if let Some(token) = self.token.clone() {
+                    let room_id = ctx.props().room_id;
+                    let link = ctx.link().clone();
+            
+                    spawn_local(async move {
+                        match get_user_presence(&token, room_id).await {
+                            Ok(presence) => link.send_message(Msg::FetchUserPresenceSuccess(presence)),
+                            Err(err) => link.send_message(Msg::FetchUserPresenceError(err)),
+                        }
+                    });
+                }
+                false
+            }
+            Msg::FetchUserPresenceSuccess(presence) => {
+                self.user_presence = presence;
+                self.user_presence_error = None;
+                true
+            }
+            Msg::FetchUserPresenceError(err) => {
+                self.user_presence_error = Some(err);
+                true
+            }
         }
     }
 
@@ -197,7 +231,10 @@ impl Component for ChatRoom {
                     ">
                         {"Room Members"}
                     </h2>
-                    <RoomMembersList members={self.room_members.clone()} />
+                    <RoomMembersList 
+                        members={self.room_members.clone()} 
+                        user_presence={self.user_presence.clone()}
+                    />
                 </Panel>
             }
         } else if let Some(error) = &self.room_members_error {
@@ -286,4 +323,5 @@ impl Component for ChatRoom {
             </div>
         }
     }
+
 }
