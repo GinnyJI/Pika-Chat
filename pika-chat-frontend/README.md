@@ -13,7 +13,7 @@ cargo build  # ⚡ Charging up your app with "Pika Power!"
 trunk serve  # 💬 Serving the chatroom faster than Pikachu's Quick Attack!
 ```
 
-Visit [http://localhost:8080](http://localhost:8080) to start your chat journey! 
+Visit [http://localhost:3000](http://localhost:3000) to start your chat journey!
 
 ---
 

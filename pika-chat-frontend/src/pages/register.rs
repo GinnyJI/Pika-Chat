@@ -89,6 +89,7 @@ impl Component for Register {
             "/static/avatar3.png".to_string(),
             "/static/avatar4.png".to_string(),
             "/static/avatar5.png".to_string(),
+            "/static/avatar6.jpg".to_string(),
         ];
 
         html! {
