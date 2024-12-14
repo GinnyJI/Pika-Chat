@@ -2,13 +2,13 @@ use yew::prelude::*;
 use yew_router::prelude::*;
 use gloo::storage::{LocalStorage, Storage};
 use wasm_bindgen_futures::spawn_local;
-use crate::services::websocket::WebSocketService;
+use crate::services::websocket::{WebSocketService, BroadcastMessage};
+use crate::services::room::{get_user_presence, UserPresence};
 use crate::routes::Route;
 use web_sys::HtmlInputElement;
 use crate::components::footer::Footer;
 use crate::components::header::Header;
-use crate::services::utils::decode_username;
-use crate::services::utils::decode_userid;
+use crate::services::utils::{decode_username, decode_userid};
 use crate::services::auth::logout;
 use crate::services::room::RoomMember;
 use crate::services::room::get_room_members;
@@ -18,7 +18,7 @@ use crate::components::message::{Message, MessageType};
 
 pub enum Msg {
     SendMessage,
-    ReceiveMessage(String),
+    ReceiveMessage(BroadcastMessage), // Updated to handle structured messages
     UpdateMessageInput(String),
     WebSocketConnected,
     WebSocketDisconnected,
@@ -29,24 +29,30 @@ pub enum Msg {
     FetchRoomMembers,
     FetchRoomMembersSuccess(Vec<RoomMember>),
     FetchRoomMembersError(String),
+    FetchUserPresence,
+    FetchUserPresenceSuccess(Vec<UserPresence>),
+    FetchUserPresenceError(String),
 }
 
 #[derive(Clone, Properties, PartialEq)]
 pub struct Props {
     pub room_id: i64,
+    pub room_name: Option<String>,
 }
 
 pub struct ChatRoom {
     token: Option<String>,
     ws_service: Option<WebSocketService>,
     message_input: String,
-    messages: Vec<String>,
+    messages: Vec<BroadcastMessage>, // Store structured messages
     error: Option<String>,
     username: String,
     avatar_url: Option<String>,
     userid: String,
     room_members: Vec<RoomMember>,
     room_members_error: Option<String>,
+    user_presence: Vec<UserPresence>,
+    user_presence_error: Option<String>,
 }
 
 impl Component for ChatRoom {
@@ -70,11 +76,16 @@ impl Component for ChatRoom {
             userid,
             room_members: vec![],
             room_members_error: None,
+            user_presence: vec![],
+            user_presence_error: None,
         };
 
         // Fetch room members on component creation
         let link = ctx.link().clone();
         link.send_message(Msg::FetchRoomMembers);
+
+        // Fetch user presence on component creation
+        link.send_message(Msg::FetchUserPresence);
 
         component
     }
@@ -157,6 +168,29 @@ impl Component for ChatRoom {
                 self.room_members_error = Some(err);
                 true
             }
+            Msg::FetchUserPresence => {
+                if let Some(token) = self.token.clone() {
+                    let room_id = ctx.props().room_id;
+                    let link = ctx.link().clone();
+            
+                    spawn_local(async move {
+                        match get_user_presence(&token, room_id).await {
+                            Ok(presence) => link.send_message(Msg::FetchUserPresenceSuccess(presence)),
+                            Err(err) => link.send_message(Msg::FetchUserPresenceError(err)),
+                        }
+                    });
+                }
+                false
+            }
+            Msg::FetchUserPresenceSuccess(presence) => {
+                self.user_presence = presence;
+                self.user_presence_error = None;
+                true
+            }
+            Msg::FetchUserPresenceError(err) => {
+                self.user_presence_error = Some(err);
+                true
+            }
         }
     }
 
@@ -166,29 +200,19 @@ impl Component for ChatRoom {
             let userid = self.userid.clone();
             let link = ctx.link().clone();
 
-            let link_on_message = link.clone();
-            let on_message = Callback::from(move |msg: String| {
-                link_on_message.send_message(Msg::ReceiveMessage(msg));
-            });
-
-            let link_on_error = link.clone();
-            let on_error = Callback::from(move |err: String| {
-                link_on_error.send_message(Msg::WebSocketError(err));
-            });
-
+            let on_message = link.callback(Msg::ReceiveMessage);
+            let on_error = link.callback(Msg::WebSocketError);
             let on_connect = link.callback(|_| Msg::WebSocketConnected);
 
             let ws_service = WebSocketService::new(
                 &room_id.to_string(),
                 &userid.to_string(),
                 on_message,
-                // token,
                 on_error,
                 on_connect,
             );
 
             self.ws_service = Some(ws_service);
-
         }
     }
 
@@ -207,7 +231,10 @@ impl Component for ChatRoom {
                     ">
                         {"Room Members"}
                     </h2>
-                    <RoomMembersList members={self.room_members.clone()} />
+                    <RoomMembersList 
+                        members={self.room_members.clone()} 
+                        user_presence={self.user_presence.clone()}
+                    />
                 </Panel>
             }
         } else if let Some(error) = &self.room_members_error {
@@ -257,8 +284,18 @@ impl Component for ChatRoom {
                     <div style="width: 100%; max-width: 800px; margin-bottom: 2rem; text-align: left;">
                         <div style="border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 1rem; max-height: 400px; overflow-y: auto; background-color: #ffffff;">
                             {
-                                for self.messages.iter().map(|message| html! {
-                                    <p style="padding: 0.5rem 0; border-bottom: 1px solid #e5e7eb;">{ message }</p>
+                                for self.messages.iter().map(|msg| {
+                                    html! {
+                                        <p style={
+                                            if msg.is_system {
+                                                "padding: 0.5rem 0; border-bottom: 1px solid #e5e7eb; color: gray;"
+                                            } else {
+                                                "padding: 0.5rem 0; border-bottom: 1px solid #e5e7eb;"
+                                            }
+                                        }>
+                                            { format!("{}: {}", if msg.is_system { "System" } else { &msg.username }, msg.message) }
+                                        </p>
+                                    }
                                 })
                             }
                         </div>
@@ -282,9 +319,9 @@ impl Component for ChatRoom {
                         </div>
                     </div>
                 </main>
-
                 <Footer />
             </div>
         }
     }
+
 }

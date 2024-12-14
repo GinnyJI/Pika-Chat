@@ -116,3 +116,42 @@ pub async fn add_room_member(token: &str, room_id: i64) -> Result<(), String> {
         Err(err.error)
     }
 }
+
+#[derive(Deserialize, Debug, Clone, PartialEq)]
+pub struct UserPresence {
+    pub user_id: i64,
+    pub is_online: bool,
+}
+pub async fn get_user_presence(token: &str, room_id: i64) -> Result<Vec<UserPresence>, String> {
+    let response = Request::get(&format!(
+        "http://127.0.0.1:8080/api/users/presence/{}",
+        room_id
+    ))
+    .header("Authorization", &format!("Bearer {}", token))
+    .send()
+    .await
+    .map_err(|_| "Failed to connect to the server".to_string())?;
+
+    if response.ok() {
+        // Log the successful request
+        println!("Successfully fetched presence data for room ID: {}", room_id);
+
+        response
+            .json::<Vec<UserPresence>>()
+            .await
+            .map_err(|_| "Failed to parse server response".to_string())
+    } else if response.status() == 404 {
+        // Log the specific error case
+        println!("Room ID {} not found or no users present.", room_id);
+        Err("Room not found or no users present".to_string())
+    } else {
+        let err: ErrorResponse = response
+            .json::<ErrorResponse>()
+            .await
+            .map_err(|_| "Invalid error response from server".to_string())?;
+
+        // Log the generic error
+        println!("Error while fetching presence for room ID {}: {}", room_id, err.error);
+        Err(err.error)
+    }
+}

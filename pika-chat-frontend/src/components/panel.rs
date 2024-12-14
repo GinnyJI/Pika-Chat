@@ -13,7 +13,7 @@ pub fn panel(props: &PanelProps) -> Html {
         top: 68px;
         left: 0; 
         height: calc(100% - 122px);  
-        width: 300px; 
+        width: auto; 
         background-color: #f9fafb; 
         border-right: 1px solid #e5e7eb; 
         padding: 1rem; 
