@@ -6,7 +6,9 @@
 
 - **Xinyi Gong**  
   Student ID: 1002109826  
-  Email: [x.gong@mail.utoronto.ca](mailto:x.gong@mail.utoronto.ca)  
+  Email: [x.gong@mail.utoronto.ca](mailto:x.gong@mail.utoronto.ca)
+  
+***
 
 ## Motivation  
 
@@ -18,6 +20,8 @@ By addressing this void, our project not only fills a critical gap in the Rust e
 
 Furthermore, by releasing this project as open-source, we aim to enrich the Rust community’s resources, providing a practical example of full-stack development in Rust. This contribution will serve as an inspiration and guide for developers exploring Rust for building scalable, secure, and responsive real-time systems, encouraging further innovation in Rust web development.  
 
+***
+
 ## Objectives  
 
 The primary objective of this project is to develop a scalable and high-performance real-time chat application built entirely in Rust. This application empowers users to create chat rooms, send messages instantly, and monitor other users' online or offline status.  
@@ -25,6 +29,9 @@ The primary objective of this project is to develop a scalable and high-performa
 By leveraging Rust’s unparalleled performance benefits and memory safety guarantees, the project aims to deliver a secure, reliable, and responsive user experience. In addition, the project serves as a comprehensive case study demonstrating how Rust can be effectively utilized to build robust, real-time communication systems.  
 
 A key motivation behind this work is to address a critical gap in the Rust ecosystem, where full-stack, real-time chat applications remain limited. By sharing this project’s design, implementation, and findings, we aim to contribute valuable resources and insights to the developer community, inspiring further innovation and adoption of Rust for similar use cases.  
+
+***
+
 
 ## Features
 
@@ -73,6 +80,8 @@ For deployment, the project integrates Docker for consistent containerization an
 ### **Modular and Maintainable Codebase**  
 The project follows best practices in code design, with a clear separation of concerns between route handlers and data models. This modular architecture ensures maintainability, scalability, and ease of adaptation for future enhancements. By aligning with industry standards, the codebase encourages collaboration among developers and allows for organized task distribution.  
 
+***
+
 ## User’s (or Developer’s) Guide  
 
 Welcome to the real-time chat application! 🚀 This guide will help you get started quickly and make the most of the exciting features. Whether you're a user looking to chat or a developer exploring the project, follow these steps to dive in.  
@@ -84,44 +93,40 @@ Before starting, ensure you've set up the server and client following the instru
 
 👉 [http://localhost:3000/](http://localhost:3000/)  
 
----
 
 ### **2. Register Your Account** 📝  
 - On the top-right corner, click **‘Register’** to create your account.  
 - Fill in the form and choose your favorite avatar to personalize your profile. 🧑‍🎨  
 - Once done, hit **‘Submit’** and you're all set!  
 
----
 
 ### **3. Log In and Access Your Dashboard** 🔑  
 - Woohoo! 🎉 Your account is ready.  
 - Log in using the credentials you just created.  
 - After logging in, you’ll land on the **Dashboard** page. You’ll see your name and avatar proudly displayed on the top-right corner.  
 
----
 
 ### **4. Create or Join Chat Rooms** 💬  
 - Ready to chat? Click the **‘Create Room’** button to create a new chat room and give it a name.  
 - If you'd rather join an existing chat room, simply select one from the list.  
 
----
 
 ### **5. Chat and Explore** 🚀  
 - Once you join a chat room, you’ll see the **Room Member List** on the left panel. Each user’s online/offline status is displayed so you know who’s active.  
 - Start chatting and enjoy the real-time messaging experience! 💬  
 
----
 
 ### **6. Log Out When Done** 👋  
 - Finished chatting? Click the **‘Logout’** button on the top-right corner to securely sign out.  
 - Come back anytime — your chatrooms and profile will be waiting for you!  
 
----
 
 ### **What’s Next?** 🌟  
 Feel free to explore more, invite your friends, or customize your experience further. If you're a developer, dive into the codebase and explore how everything works under the hood.  
 
 Happy chatting! 🥳✨  
+
+***
 
 ## Reproducibility Guide
 
@@ -222,4 +227,7 @@ trunk serve  # 💬 Serving the chatroom faster than Pikachu's Quick Attack!
 ```
 
 Visit [http://127.0.0.1:3000](http://127.0.0.1:3000/) to begin your chat journey!
+
+***
+
 
