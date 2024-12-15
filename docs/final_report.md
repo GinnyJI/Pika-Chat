@@ -106,8 +106,6 @@ Check out our short video demonstration to see Pika Chat in action! From user au
 
 Welcome to the real-time chat application! 🚀 This guide will help you get started quickly and make the most of the exciting features. Whether you're a user looking to chat or a developer exploring the project, follow these steps to dive in.  
 
----
-
 ### **1. Setup the Server and Client**  
 Before starting, ensure you've set up the server and client following the instructions in the [Reproducibility Guide](#reproducibility-guide) section. Once you're ready, open your favorite browser and visit:  
 
