@@ -12,7 +12,8 @@
 ## Table of Contents 
 - [Motivation](#motivation)   
 - [Objectives](#objectives)  
-- [Features](#features)  
+- [Features](#features)
+- [Video Demo: See Pika Chat in Action!](#video-demo)  
 - [User's Guide](#users-guide)  
 - [Reproducibility Guide](#reproducibility-guide)
 - [Contributions](#contributions)
@@ -89,6 +90,15 @@ For deployment, the project integrates Docker for consistent containerization an
 
 ### **Modular and Maintainable Codebase**  
 The project follows best practices in code design, with a clear separation of concerns between route handlers and data models. This modular architecture ensures maintainability, scalability, and ease of adaptation for future enhancements. By aligning with industry standards, the codebase encourages collaboration among developers and allows for organized task distribution.  
+
+***
+
+<a id="video-demo"></a>  
+## Video Demo: See Pika Chat in Action! 🎥  
+
+Check out our short video demonstration to see Pika Chat in action! From user authentication to real-time messaging, this video walks you through all the features that make Pika Chat an engaging and fun experience.  
+
+[Watch the Demo Here](https://youtu.be/7ebksLx-KNw)
 
 ***
 
