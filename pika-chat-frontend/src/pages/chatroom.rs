@@ -3,7 +3,6 @@ use yew_router::prelude::*;
 use gloo::storage::{LocalStorage, Storage};
 use wasm_bindgen_futures::spawn_local;
 use crate::services::websocket::{WebSocketService, BroadcastMessage};
-use crate::services::room::{get_user_presence, UserPresence};
 use crate::routes::Route;
 use web_sys::HtmlInputElement;
 use crate::components::footer::Footer;
@@ -16,9 +15,10 @@ use crate::components::panel::Panel;
 use crate::components::room_member_list::RoomMembersList;
 use crate::components::message::{Message, MessageType};
 
+#[allow(dead_code)]
 pub enum Msg {
     SendMessage,
-    ReceiveMessage(BroadcastMessage), // Updated to handle structured messages
+    ReceiveMessage(BroadcastMessage),
     UpdateMessageInput(String),
     WebSocketConnected,
     WebSocketDisconnected,
@@ -29,9 +29,6 @@ pub enum Msg {
     FetchRoomMembers,
     FetchRoomMembersSuccess(Vec<RoomMember>),
     FetchRoomMembersError(String),
-    FetchUserPresence,
-    FetchUserPresenceSuccess(Vec<UserPresence>),
-    FetchUserPresenceError(String),
 }
 
 #[derive(Clone, Properties, PartialEq)]
@@ -51,8 +48,6 @@ pub struct ChatRoom {
     userid: String,
     room_members: Vec<RoomMember>,
     room_members_error: Option<String>,
-    user_presence: Vec<UserPresence>,
-    user_presence_error: Option<String>,
 }
 
 impl Component for ChatRoom {
@@ -76,16 +71,11 @@ impl Component for ChatRoom {
             userid,
             room_members: vec![],
             room_members_error: None,
-            user_presence: vec![],
-            user_presence_error: None,
         };
 
         // Fetch room members on component creation
         let link = ctx.link().clone();
         link.send_message(Msg::FetchRoomMembers);
-
-        // Fetch user presence on component creation
-        link.send_message(Msg::FetchUserPresence);
 
         component
     }
@@ -168,29 +158,6 @@ impl Component for ChatRoom {
                 self.room_members_error = Some(err);
                 true
             }
-            Msg::FetchUserPresence => {
-                if let Some(token) = self.token.clone() {
-                    let room_id = ctx.props().room_id;
-                    let link = ctx.link().clone();
-            
-                    spawn_local(async move {
-                        match get_user_presence(&token, room_id).await {
-                            Ok(presence) => link.send_message(Msg::FetchUserPresenceSuccess(presence)),
-                            Err(err) => link.send_message(Msg::FetchUserPresenceError(err)),
-                        }
-                    });
-                }
-                false
-            }
-            Msg::FetchUserPresenceSuccess(presence) => {
-                self.user_presence = presence;
-                self.user_presence_error = None;
-                true
-            }
-            Msg::FetchUserPresenceError(err) => {
-                self.user_presence_error = Some(err);
-                true
-            }
         }
     }
 
@@ -217,8 +184,6 @@ impl Component for ChatRoom {
     }
 
     fn view(&self, ctx: &Context<Self>) -> Html {
-        // TODO: make the member list a reactive state
-        // TODO: add avatar for the members
         let room_members_view = if !self.room_members.is_empty() {
             html! {
                 <Panel>
@@ -233,7 +198,8 @@ impl Component for ChatRoom {
                     </h2>
                     <RoomMembersList 
                         members={self.room_members.clone()} 
-                        user_presence={self.user_presence.clone()}
+                        room_id={ctx.props().room_id}
+                        token={self.token.clone()}
                     />
                 </Panel>
             }
@@ -268,7 +234,6 @@ impl Component for ChatRoom {
                 </Panel>
             }
         };
-
         html! {
             <div style="min-height: 100vh; display: flex; flex-direction: column; background-color: #f9fafb;">
                 <Header
@@ -306,6 +271,14 @@ impl Component for ChatRoom {
                                 oninput={ctx.link().callback(|e: InputEvent| {
                                     let input: HtmlInputElement = e.target_unchecked_into();
                                     Msg::UpdateMessageInput(input.value())
+                                })}
+                                onkeypress={ctx.link().batch_callback(|e: KeyboardEvent| {
+                                    if e.key() == "Enter" {
+                                        e.prevent_default(); // Prevent the default action for the Enter key
+                                        Some(Msg::SendMessage)
+                                    } else {
+                                        None // Do nothing for other keys
+                                    }
                                 })}
                                 placeholder="Type your message"
                                 style="flex: 1; padding: 0.75rem; border: 1px solid #e5e7eb; border-radius: 0.5rem; margin-right: 0.5rem;"

@@ -16,6 +16,7 @@ pub struct BroadcastMessage {
     pub username: String,
 }
 
+#[allow(dead_code)]
 pub struct WebSocketService {
     write: Option<Rc<RefCell<futures::stream::SplitSink<WebSocket, Message>>>>,
     sender: Rc<Callback<BroadcastMessage>>,

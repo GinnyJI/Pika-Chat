@@ -13,6 +13,7 @@ pub struct MessageRequest {
     pub content: String,
 }
 
+#[allow(dead_code)]
 impl Message {
     // This method might be used for sending messages over WebSocket
     pub fn new(room_id: RoomId, message: String) -> Self {

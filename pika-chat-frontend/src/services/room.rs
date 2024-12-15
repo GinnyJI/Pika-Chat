@@ -22,10 +22,10 @@ pub struct RoomsResponse {
 }
 
 #[derive(Deserialize, Debug, Clone, PartialEq)]
-#[allow(dead_code)]
 pub struct RoomMember {
     pub user_id: i64,
     pub username: String,
+    pub avatar_url: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -97,6 +97,7 @@ pub async fn get_room_members(token: &str, room_id: i64) -> Result<Vec<RoomMembe
     }
 }
 
+#[allow(dead_code)]
 pub async fn add_room_member(token: &str, room_id: i64) -> Result<(), String> {
     let response = Request::post(&format!(
         "http://127.0.0.1:8080/api/rooms/{}/members",
