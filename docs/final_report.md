@@ -108,7 +108,7 @@ Before starting, ensure you've set up the server and client following the instru
 ### **2. Register Your Account** 📝  
 - On the top-right corner, click **‘Register’** to create your account.  
 - Fill in the form and choose your favorite avatar to personalize your profile. 🧑‍🎨  
-- Once done, hit **‘Submit’** and you're all set!  
+- Once done, hit **‘Register’** and you're all set!  
 
 ![Register Page](images/register.png)
 
