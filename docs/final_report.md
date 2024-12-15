@@ -9,6 +9,14 @@
   Email: [x.gong@mail.utoronto.ca](mailto:x.gong@mail.utoronto.ca)
   
 ***
+## Table of Contents 
+- [Motivation](#motivation)   
+- [Objectives](#objectives)  
+- [Features](#features)  
+- [User's Guide](#users-guide)  
+- [Reproducibility Guide](#reproducibility-guide)
+
+***
 
 ## Motivation  
 
@@ -82,7 +90,7 @@ The project follows best practices in code design, with a clear separation of co
 
 ***
 
-## User’s (or Developer’s) Guide  
+## User’s Guide  
 
 Welcome to the real-time chat application! 🚀 This guide will help you get started quickly and make the most of the exciting features. Whether you're a user looking to chat or a developer exploring the project, follow these steps to dive in.  
 
