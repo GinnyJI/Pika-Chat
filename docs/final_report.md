@@ -15,6 +15,7 @@
 - [Features](#features)  
 - [User's Guide](#users-guide)  
 - [Reproducibility Guide](#reproducibility-guide)
+- [Contributions](#contributions)  
 
 ***
 
@@ -243,4 +244,10 @@ Visit [http://127.0.0.1:3000](http://127.0.0.1:3000/) to begin your chat journey
 
 ***
 
+## Contributions  
 
+- **Ginny Ji**: Primarily focused on the front-end development of the project, implementing the user interface using the Yew framework. She was responsible for building responsive and intuitive chat room layouts, ensuring cross-browser compatibility, and integrating real-time features on the client side.  
+
+- **Xinyi Gong**: Worked on the backend development, focusing on implementing secure user authentication, session management with JWTs, and setting up the chat room functionality. Xinyi also handled server-side logic, including managing user presence and message broadcasting using WebSockets.
+
+***
