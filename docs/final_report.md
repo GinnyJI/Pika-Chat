@@ -15,7 +15,8 @@
 - [Features](#features)  
 - [User's Guide](#users-guide)  
 - [Reproducibility Guide](#reproducibility-guide)
-- [Contributions](#contributions)  
+- [Contributions](#contributions)
+- [Fun Fact: The Spirit Behind Pika Chat 🐾](#fun-fact)  
 
 ***
 
@@ -251,3 +252,12 @@ Visit [http://127.0.0.1:3000](http://127.0.0.1:3000/) to begin your chat journey
 - **Xinyi Gong**: Worked on the backend development, focusing on implementing secure user authentication, session management with JWTs, and setting up the chat room functionality. Xinyi also handled server-side logic, including managing user presence and message broadcasting using WebSockets.
 
 ***
+
+<a id="fun-fact"></a> 
+## Fun Fact: The Spirit Behind Pika Chat 🐾  
+
+Ever wonder why we named our project *Pika Chat*? Well, it’s inspired by two very special members of our team — our adorable cats, **Pikachu** and **Puffy**! 🐱✨  
+
+We absolutely love chatting with them. Whether it’s their playful meows or just lounging beside us during long coding sessions, they make every moment fun and lively. So, we thought — why not bring that same joyful, cozy spirit to our project?  
+
+Just like talking to Pikachu and Puffy, *Pika Chat* is all about creating a space where chatting is effortless, fun, and full of connection. To add to the experience, we included **Easter eggs** in the form of playful WebSocket responses — messages with certain keywords trigger fun and engaging system reactions, making the app even more interactive and memorable. After all, the best conversations are the ones you enjoy! 🎉  
