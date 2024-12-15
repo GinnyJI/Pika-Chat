@@ -13,7 +13,7 @@
 - [Motivation](#motivation)   
 - [Objectives](#objectives)  
 - [Features](#features)
-- [Video Demo: See Pika Chat in Action!](#video-demo)  
+- [Video Demo](#video-demo)  
 - [User's Guide](#users-guide)  
 - [Reproducibility Guide](#reproducibility-guide)
 - [Contributions](#contributions)
