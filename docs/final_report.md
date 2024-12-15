@@ -93,28 +93,33 @@ Before starting, ensure you've set up the server and client following the instru
 
 👉 [http://localhost:3000/](http://localhost:3000/)  
 
+![Welcome Page](images/welcome.png)
 
 ### **2. Register Your Account** 📝  
 - On the top-right corner, click **‘Register’** to create your account.  
 - Fill in the form and choose your favorite avatar to personalize your profile. 🧑‍🎨  
 - Once done, hit **‘Submit’** and you're all set!  
 
+![Register Page](images/register.png)
 
 ### **3. Log In and Access Your Dashboard** 🔑  
 - Woohoo! 🎉 Your account is ready.  
 - Log in using the credentials you just created.  
 - After logging in, you’ll land on the **Dashboard** page. You’ll see your name and avatar proudly displayed on the top-right corner.  
 
+![Login Page](images/login.png)
 
 ### **4. Create or Join Chat Rooms** 💬  
 - Ready to chat? Click the **‘Create Room’** button to create a new chat room and give it a name.  
 - If you'd rather join an existing chat room, simply select one from the list.  
 
+![Dashboard Page](images/dashboard.png)
 
 ### **5. Chat and Explore** 🚀  
 - Once you join a chat room, you’ll see the **Room Member List** on the left panel. Each user’s online/offline status is displayed so you know who’s active.  
 - Start chatting and enjoy the real-time messaging experience! 💬  
 
+![Chatroom Page](images/chatroom.png)
 
 ### **6. Log Out When Done** 👋  
 - Finished chatting? Click the **‘Logout’** button on the top-right corner to securely sign out.  
