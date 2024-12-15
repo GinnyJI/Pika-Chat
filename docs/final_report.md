@@ -98,7 +98,7 @@ Welcome to the real-time chat application! 🚀 This guide will help you get sta
 ---
 
 ### **1. Setup the Server and Client**  
-Before starting, ensure you've set up the server and client following the instructions in the **Reproducibility Guide** section. Once you're ready, open your favorite browser and visit:  
+Before starting, ensure you've set up the server and client following the instructions in the [Reproducibility Guide](#reproducibility-guide) section. Once you're ready, open your favorite browser and visit:  
 
 👉 [http://localhost:3000/](http://localhost:3000/)  
 
@@ -128,7 +128,7 @@ Before starting, ensure you've set up the server and client following the instru
 - Once you join a chat room, you’ll see the **Room Member List** on the left panel. Each user’s online/offline status is displayed so you know who’s active.  
 - Start chatting and enjoy the real-time messaging experience! 💬  
 
-![Chatroom Page](images/chatroom.png)
+![Chatroom Page](images/chatroom.png?)
 
 ### **6. Log Out When Done** 👋  
 - Finished chatting? Click the **‘Logout’** button on the top-right corner to securely sign out.  
