@@ -32,7 +32,7 @@ impl Component for RoomMembersList {
         let token = ctx.props().token.clone();
         let link = ctx.link().clone();
 
-        let fetch_presence_interval = Some(Interval::new(3000, move || {
+        let fetch_presence_interval = Some(Interval::new(1000, move || {
             if let Some(token) = token.clone() {
                 let link = link.clone(); // Clone the link inside the closure
                 spawn_local(async move {
