@@ -1,8 +1,8 @@
 ## Presented to you by the Pika's Team  
 
-- **Ginny Ji** (mailto:ginny.ji@mail.utoronto.ca)  
+- [Ginny Ji](mailto:ginny.ji@mail.utoronto.ca)  
 
-- **Xinyi Gong** (mailto:x.gong@mail.utoronto.ca)
+- [Xinyi Gong](mailto:x.gong@mail.utoronto.ca)
   
 ***
 ## Table of Contents 
