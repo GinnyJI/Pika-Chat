@@ -1,30 +1,19 @@
 ## Presented to you by the Pika's Team  
 
-- **Ginny Ji** 
-  Email: [ginny.ji@mail.utoronto.ca](mailto:ginny.ji@mail.utoronto.ca)  
+- **Ginny Ji** (mailto:ginny.ji@mail.utoronto.ca)  
 
-- **Xinyi Gong** 
-  Email: [x.gong@mail.utoronto.ca](mailto:x.gong@mail.utoronto.ca)
+- **Xinyi Gong** (mailto:x.gong@mail.utoronto.ca)
   
 ***
 ## Table of Contents 
+- [User's Guide](#users-guide)
 - [Video Demo](#video-demo)  
-- [User's Guide](#users-guide)  
 - [Features](#features)
 - [Reproducibility Guide](#reproducibility-guide)
 - [Motivation](#motivation)   
 - [Objectives](#objectives)  
 - [Contributions](#contributions)
 - [Fun Fact: The Spirit Behind Pika Chat 🐾](#fun-fact)  
-
-***
-
-<a id="video-demo"></a>  
-## Video Demo: See Pika Chat in Action! 🎥  
-
-Check out our short video demonstration to see Pika Chat in action! From user authentication to real-time messaging, this video walks you through all the features that make Pika Chat an engaging and fun experience.  
-
-[Watch the Demo Here](https://youtu.be/7ebksLx-KNw)
 
 ***
 
@@ -74,6 +63,15 @@ Before starting, ensure you've set up the server and client following the instru
 Feel free to explore more, invite your friends, or customize your experience further. If you're a developer, dive into the codebase and explore how everything works under the hood.  
 
 Happy chatting! 🥳✨  
+
+***
+
+<a id="video-demo"></a>  
+## Video Demo: See Pika Chat in Action! 🎥  
+
+Check out our short video demonstration to see Pika Chat in action! From user authentication to real-time messaging, this video walks you through all the features that make Pika Chat an engaging and fun experience.  
+
+[Watch the Demo Here](https://youtu.be/7ebksLx-KNw)
 
 ***
 
