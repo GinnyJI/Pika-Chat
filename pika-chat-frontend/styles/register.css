@@ -1,0 +1,74 @@
+/* Styles specific to the Register page */
+.register-card {
+    max-width: 400px;
+    width: 100%;
+    background-color: #ffffff;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+}
+
+.register-heading {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #3f3025;
+    text-align: center;
+}
+
+.register-form {
+    margin-top: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.error-message {
+    color: #dc2626;
+    font-size: 0.875rem;
+}
+
+.success-message {
+    color: #16a34a;
+    font-size: 0.875rem;
+}
+
+.avatar-selection {
+    margin-top: 1rem;
+}
+
+.avatar-options {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    margin-top: 0.5rem;
+}
+
+.avatar-option {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 2px solid transparent;
+    border-radius: 50%;
+    padding: 0.5rem;
+    cursor: pointer;
+    transition: transform 0.3s ease, border-color 0.3s ease;
+}
+
+.avatar-option img {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.avatar-option:hover {
+    transform: scale(1.1);
+    border-color: #007bff; /* Change to your desired hover color */
+}
+
+.avatar-option.selected {
+    border-color: #28a745; /* Change to your desired selected color */
+    transform: scale(1.15);
+}

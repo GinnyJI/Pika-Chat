@@ -1,0 +1,129 @@
+/* General Layout */
+.full-height {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background-color: #f9fafb;
+}
+
+.header {
+    background-color: #f7d346;
+    padding: 1rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    width: 100%;
+}
+
+.nav {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.nav-logo {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #3f3025;
+    text-decoration: none;
+}
+
+.nav-links {
+    display: flex;
+    align-items: center; /* Ensure items align vertically */
+    gap: 1rem;
+}
+
+.nav-link {
+    color: #3f3025;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+.nav-link:hover {
+    color: #a36135;
+}
+
+/* Avatar Styling */
+.nav-avatar {
+    width: 32px; /* Set a fixed size for the avatar */
+    height: 32px;
+    border-radius: 50%; /* Make the avatar circular */
+    border: 2px solid #3f3025; /* Optional border for better visibility */
+    object-fit: cover; /* Ensure the image scales well */
+}
+
+/* Ensure spacing between avatar and username */
+.nav-avatar + span {
+    margin-left: 0.5rem;
+}
+
+.main {
+    flex: 1;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    justify-content: center;
+}
+
+.heading {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: #3f3025;
+    margin-bottom: 1.5rem;
+}
+
+.input-group {
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+}
+
+.input-box {
+    padding: 0.5rem;
+    font-size: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    width: 250px;
+    margin-right: 1rem;
+}
+
+.button {
+    padding: 0.5rem 1rem;
+    background-color: #f8ec99;
+    color: #3f3025;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.button:hover {
+    background-color: #f7e07b;
+}
+
+.description {
+    font-size: 1.125rem;
+    color: #a36135;
+    margin-bottom: 2rem;
+    max-width: 600px;
+}
+
+.error {
+    color: red;
+}
+
+.footer {
+    background-color: #3f3025;
+    color: #e5e7eb;
+    text-align: center;
+    padding: 1rem;
+    width: 100%;
+}
+
+.footer-text {
+    font-size: 0.875rem;
+}
